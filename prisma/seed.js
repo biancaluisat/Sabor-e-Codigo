@@ -28,6 +28,28 @@ async function main() {
                 localidade: 'São Paulo',
                 uf: 'SP',
             },
+            {
+                nome: 'Maria Oliveira',
+                telefone: '21988887777',
+                email: 'maria.oliveira@provedor.com',
+                cpf: '98765432100',
+                cep: '20040002',
+                logradouro: 'Avenida Rio Branco',
+                bairro: 'Centro',
+                localidade: 'Rio de Janeiro',
+                uf: 'RJ',
+            },
+            {
+                nome: 'Ricardo Santos',
+                telefone: '31977776666',
+                email: 'ricardo.santos@exemplo.com.br',
+                cpf: '45678912344',
+                cep: '30140010',
+                logradouro: 'Rua da Bahia',
+                bairro: 'Lourdes',
+                localidade: 'Belo Horizonte',
+                uf: 'MG',
+            },
         ],
     });
 
