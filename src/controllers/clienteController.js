@@ -59,3 +59,24 @@ export const buscarPorId = async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar cliente.' });
     }
 };
+
+export const atualizar = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const cliente = await ClienteModel.buscarPorId(id);
+
+        if (!cliente) {
+            return res.status(404).json({ error: 'Cliente não encontrado.' });
+        }
+
+        if (req.body.nome) cliente.nome = req.body.nome;
+        if (req.body.telefone) cliente.telefone = req.body.telefone;
+        if (req.body.email) cliente.email = req.body.email;
+        if (req.body.ativo !== undefined) cliente.ativo = req.body.ativo;
+
+        const data = await cliente.atualizar();
+        res.json({ message: 'Atualizado com sucesso!', data });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao atualizar.' });
+    }
+};
