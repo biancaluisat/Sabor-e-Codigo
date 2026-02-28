@@ -80,3 +80,24 @@ export const atualizar = async (req, res) => {
         res.status(500).json({ error: 'Erro ao atualizar.' });
     }
 };
+
+export const deletar = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+
+        const temPedidos = await ClienteModel.verificarPedidosAbertos(id);
+        if (temPedidos) {
+            return res.status(400).json({ error: 'Cliente tem pedidos abertos!' });
+        }
+
+        const cliente = await ClienteModel.buscarPorId(id);
+        if (!cliente) {
+            return res.status(404).json({ error: 'Cliente não encontrado.' });
+        }
+
+        await cliente.deletar();
+        res.json({ message: 'Removido com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao deletar.' });
+    }
+};
