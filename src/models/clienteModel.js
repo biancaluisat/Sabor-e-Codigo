@@ -1,13 +1,15 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class ClienteModel {
+        #cpf; #cep;
+
     constructor({ id, nome, telefone, email, cpf, cep, logradouro = null, bairro = null, localidade = null, uf = null, ativo = true } = {}) {
         this.id = id;
         this.nome = nome;
         this.telefone = telefone;
         this.email = email;
-        this.cpf = cpf;
-        this.cep = cep;
+        this.#cpf = cpf;
+        this.#cep = cep;
         this.logradouro = logradouro;
         this.bairro = bairro;
         this.localidade = localidade;
@@ -21,8 +23,8 @@ export default class ClienteModel {
                 nome: this.nome,
                 telefone: this.telefone,
                 email: this.email,
-                cpf: this.cpf,
-                cep: this.cep,
+                cpf: this.#cpf,
+                cep: this.#cep,
                 logradouro: this.logradouro,
                 bairro: this.bairro,
                 localidade: this.localidade,
@@ -39,7 +41,9 @@ export default class ClienteModel {
                 nome: this.nome,
                 telefone: this.telefone,
                 email: this.email,
-                ativo: this.ativo
+                cpf: this.#cpf,
+                cep: this.#cep,
+                ativo: this.ativo,
             },
         });
     }
