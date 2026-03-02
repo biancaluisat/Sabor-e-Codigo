@@ -25,8 +25,13 @@ export default class ProdutosModel {
     async atualizar() {
         return prisma.produto.update({
             where: { id: this.id },
-            data: { nome: this.nome, estado: this.estado, preco: this.preco },
-        });
+            data: {
+                nome: this.nome,
+                descricao: this.descricao,
+                categoria: this.categoria,
+                preco: this.preco,
+                disponivel: this.disponivel,
+        }});
     }
 
     async deletar() {
@@ -37,8 +42,19 @@ export default class ProdutosModel {
         const where = {};
 
         if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.estado !== undefined) where.estado = filtros.estado === 'true';
-        if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
+        if (filtros.categoria) { where.categoria = { in: filtros.categoria.split(',').map(c => c.toUpperCase()) }; }
+        if (filtros.disponivel !== undefined) { where.disponivel = filtros.disponivel === 'true' }; 
+        if (filtros.precoMin || filtros.precoMax) {
+            where.preco = {};
+        
+            if (filtros.precoMin) {
+                where.preco.gte = Number(filtros.precoMin);
+            }
+
+            if (filtros.precoMax) {
+                where.preco.lte = Number(filtros.precoMax);
+            }
+    }
 
         return prisma.produto.findMany({ where });
     }
@@ -46,6 +62,6 @@ export default class ProdutosModel {
     static async buscarPorId(id) {
         const data = await prisma.produto.findUnique({ where: { id } });
         if (!data) return null;
-        return new produtoModel(data);
+        return new ProdutosModel(data);
     }
 }
