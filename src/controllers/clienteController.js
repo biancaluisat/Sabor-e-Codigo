@@ -1,4 +1,4 @@
-import ClienteModel from '../models/ClienteModel.js';
+import ClienteModel from '../models/clienteModel.js';
 
 export const criar = async (req, res) => {
     try {

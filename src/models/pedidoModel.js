@@ -62,3 +62,83 @@ export default class PedidoModel {
 
         return itemCriado;
     }
+   async recalcularTotal() {
+        const itens = await prisma.itemPedido.findMany({
+            where: { pedidoId: this.id }
+        });
+
+        const totalCalculado = itens.reduce((acc, item) => {
+            return acc + (item.precoUnitario * item.quantidade);
+        }, 0);
+
+        return prisma.pedido.update({
+            where: { id: this.id },
+            data: { total: totalCalculado }
+        });
+    }
+
+    async pagar() {
+        if (this.status !== "ABERTO") {
+            throw new Error("Apenas pedidos ABERTOS podem ser pagos.");
+        }
+
+        return prisma.pedido.update({
+            where: { id: this.id },
+            data: { status: "PAGO" }
+        });
+    }
+
+    async cancelar() {
+        if (this.status !== "ABERTO") {
+            throw new Error("Só é possível cancelar pedidos com status ABERTO.");
+        }
+
+        return prisma.pedido.update({
+            where: { id: this.id },
+            data: { status: "CANCELADO" }
+        });
+    }
+
+    static async buscarTodos(filtros = {}) {
+
+        const where = {};
+
+        if (filtros.clienteId && !isNaN(filtros.clienteId)) {
+            where.clienteId = parseInt(filtros.clienteId);
+        }
+
+        if (filtros.status) {
+            where.status = filtros.status;
+        }
+
+        return prisma.pedido.findMany({
+            where,
+            include: {
+                cliente: true,
+                itens: {
+                    include: {
+                        produto: true
+                    }
+                }
+            }
+        });
+    }
+
+    static async buscarPorId(id) {
+        const data = await prisma.pedido.findUnique({
+            where: { id },
+            include: {
+                cliente: true,
+                itens: {
+                    include: {
+                        produto: true
+                    }
+                }
+            }
+        });
+
+        if (!data) return null;
+
+        return new PedidoModel(data);
+    }
+}
