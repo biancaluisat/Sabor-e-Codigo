@@ -94,10 +94,10 @@ export const atualizar = async (req, res) => {
 
         if (req.body.nome !== undefined) produto.nome = req.body.nome;
         if (req.body.descricao !== undefined) produto.descricao = req.body.descricao;
-        
-        if (req.body.categoria !== undefined) { 
+
+        if (req.body.categoria !== undefined) {
             const categoriaUpper = req.body.categoria.toUpperCase();
-            
+
             const categoriasValidas = ["LANCHE", "BEBIDA", "SOBREMESA", "COMBO"];
             if (!categoriasValidas.includes(categoriaUpper)) {
                 return res.status(400).json({
@@ -130,6 +130,7 @@ export const atualizar = async (req, res) => {
 export const deletar = async (req, res) => {
     try {
         const { id } = req.params;
+        const produtoId = parseInt(id);
 
         if (isNaN(id)) return res.status(400).json({ error: 'ID inválido.' });
 
@@ -137,6 +138,13 @@ export const deletar = async (req, res) => {
 
         if (!produto) {
             return res.status(404).json({ error: 'Registro não encontrado para deletar.' });
+        }
+
+        const vinculado = await ProdutosModel.pedidoAberto(produtoId);
+        if (vinculado) {
+            return res.status(400).json({
+                mensagem: "Este produto não pode ser excluído, pois está vinculado a pedidos abertos"
+            });
         }
 
         await produto.deletar();
