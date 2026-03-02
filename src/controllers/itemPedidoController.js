@@ -10,6 +10,12 @@ export const criar = async (req, res) => {
             });
         }
 
+        if(quantidade<0){
+            return res.status(400).json({
+                error: "Um item não pode ter uma quantidade nagativa no estoque"
+            });
+        }
+
         const itemPedido = new ItemPedidoModel({
             pedidoId,
             produtoId,
