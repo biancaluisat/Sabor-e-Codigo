@@ -57,6 +57,6 @@ export default class ProdutosModel {
     static async buscarPorId(id) {
         const data = await prisma.produto.findUnique({ where: { id } });
         if (!data) return null;
-        return new produtoModel(data);
+        return new ProdutosModel(data);
     }
 }
