@@ -62,3 +62,4 @@ export default class PedidoModel {
 
         return itemCriado;
     }
+}
