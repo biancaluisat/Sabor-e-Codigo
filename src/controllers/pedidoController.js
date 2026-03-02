@@ -36,3 +36,19 @@ export const criar = async (req, res) => {
     }
 };
 
+export const buscarTodos = async (req, res) => {
+    try {
+        const pedidos = await PedidoModel.buscarTodos(req.query);
+
+        if (!pedidos || pedidos.length === 0) {
+            return res.status(200).json({ mensagem: "Nenhum pedido encontrado." });
+        }
+
+        return res.status(200).json(pedidos);
+
+    } catch (error) {
+        console.error("Erro ao buscar pedidos:", error);
+        return res.status(500).json({ erro: "Erro ao buscar pedidos." });
+    }
+};
+
