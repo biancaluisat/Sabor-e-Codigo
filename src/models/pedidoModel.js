@@ -27,3 +27,38 @@ export default class PedidoModel {
         });
     }
 
+    async adicionarItem({ produtoId, quantidade }) {
+
+        if (this.status !== "ABERTO") {
+            throw new Error("Não é possível adicionar itens a um pedido que não esteja ABERTO.");
+        }
+
+        const produto = await prisma.produto.findUnique({
+            where: { id: produtoId }
+        });
+
+        if (!produto) {
+            throw new Error("Produto não encontrado.");
+        }
+
+        if (!produto.disponivel) {
+            throw new Error("Produto indisponível não pode ser adicionado ao pedido.");
+        }
+
+        if (quantidade <= 0) {
+            throw new Error("Quantidade deve ser maior que 0.");
+        }
+
+        const itemCriado = await prisma.itemPedido.create({
+            data: {
+                pedidoId: this.id,
+                produtoId,
+                quantidade,
+                precoUnitario: produto.preco
+            }
+        });
+
+        await this.recalcularTotal();
+
+        return itemCriado;
+    }
