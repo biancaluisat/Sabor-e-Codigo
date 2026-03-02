@@ -10,55 +10,89 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
     console.log('🧹 Limpando dados existentes...');
-
+    // A ordem importa por causa das relações (FK)
+    await prisma.itemPedido.deleteMany();
+    await prisma.pedido.deleteMany();
     await prisma.cliente.deleteMany();
     await prisma.produto.deleteMany();
 
-    console.log('📦 Inserindo Clientes...');
-    await prisma.cliente.createMany({
-        data: [
-            {
-                nome: 'João Silva',
-                telefone: '11999999999',
-                email: 'joao@email.com',
-                cpf: '12345678901',
-                cep: '01001000',
-                logradouro: 'Praça da Sé',
-                bairro: 'Sé',
-                localidade: 'São Paulo',
-                uf: 'SP',
-            },
-        ],
+    console.log('👥 Inserindo Clientes...');
+    const c1 = await prisma.cliente.create({
+        data: {
+            nome: 'João Silva', telefone: '11999999999', email: 'joao@email.com',
+            cpf: '12345678901', cep: '01001000', logradouro: 'Praça da Sé',
+            bairro: 'Sé', localidade: 'São Paulo', uf: 'SP'
+        }
+    });
+    const c2 = await prisma.cliente.create({
+        data: {
+            nome: 'Maria Oliveira', telefone: '21988887777', email: 'maria.oliveira@provedor.com',
+            cpf: '98765432100', cep: '20040002', logradouro: 'Avenida Rio Branco',
+            bairro: 'Centro', localidade: 'Rio de Janeiro', uf: 'RJ'
+        }
+    });
+    const c3 = await prisma.cliente.create({
+        data: {
+            nome: 'Ricardo Santos', telefone: '31977776666', email: 'ricardo.santos@exemplo.com.br',
+            cpf: '45678912344', cep: '30140010', logradouro: 'Rua da Bahia',
+            bairro: 'Lourdes', localidade: 'Belo Horizonte', uf: 'MG'
+        }
     });
 
     console.log('🍔 Inserindo Produtos...');
-    await prisma.produto.createMany({
-        data: [
-            {
-                nome: 'X-Burger Especial',
-                descricao: 'Pão, carne de 180g e queijo prato',
-                categoria: 'LANCHE',
-                preco: 35.5,
-            },
-            {
-                nome: 'Coca-Cola 350ml',
-                descricao: 'Lata gelada',
-                categoria: 'BEBIDA',
-                preco: 7.0,
-            },
-            {
-                nome: 'Petit Gâteau',
-                descricao: 'Acompanha sorvete de baunilha',
-                categoria: 'SOBREMESA',
-                preco: 22.0,
-            },
-            {
-                nome: 'Combo Casal',
-                descricao: '2 Lanches + 1 Batata G + 2 Bebidas',
-                categoria: 'COMBO',
-                preco: 85.9,
-            },
-        ],
+    const p1 = await prisma.produto.create({
+        data: { nome: 'X-Burger Especial', categoria: 'LANCHE', preco: 35.5, descricao: 'Pão e carne 180g' }
+    });
+    const p2 = await prisma.produto.create({
+        data: { nome: 'Coca-Cola 350ml', categoria: 'BEBIDA', preco: 7.0, descricao: 'Lata gelada' }
+    });
+    const p3 = await prisma.produto.create({
+        data: { nome: 'Petit Gâteau', categoria: 'SOBREMESA', preco: 22.0, descricao: 'Com sorvete' }
+    });
+
+    console.log('📝 Inserindo Pedidos e Itens...');
+    
+
+    await prisma.pedido.create({
+        data: {
+            clienteId: c1.id,
+            status: 'ABERTO',
+            total: 42.5,
+            itens: {
+                create: [
+                    { produtoId: p1.id, quantidade: 1, precoUnitario: 35.5 },
+                    { produtoId: p2.id, quantidade: 1, precoUnitario: 7.0 }
+                ]
+            }
+        }
+    });
+
+    
+    await prisma.pedido.create({
+        data: {
+            clienteId: c2.id,
+            status: 'PAGO',
+            total: 22.0,
+            itens: {
+                create: [
+                    { produtoId: p3.id, quantidade: 1, precoUnitario: 22.0 }
+                ]
+            }
+        }
+    });
+
+    
+    await prisma.pedido.create({
+        data: {
+            clienteId: c3.id,
+            status: 'CANCELADO',
+            total: 71.0,
+            itens: {
+                create: [
+                    { produtoId: p1.id, quantidade: 2, precoUnitario: 35.5 }
+                ]
+            }
+        }
     });
 
     console.log('✅ Seed finalizado com sucesso!');

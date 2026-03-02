@@ -1,32 +1,46 @@
 import prisma from '../utils/prismaClient.js';
 
-export default class ExemploModel {
-    constructor({ id = null, nome = null, estado = true, preco = null } = {}) {
+export default class ClienteModel {
+    constructor({ id, nome, telefone, email, cpf, cep, logradouro = null, bairro = null, localidade = null, uf = null, ativo = true } = {}) {
         this.id = id;
         this.nome = nome;
-        this.estado = estado;
-        this.preco = preco;
+        this.telefone = telefone;
+        this.email = email;
+        this.cpf = cpf;
+        this.cep = cep;
+        this.logradouro = logradouro;
+        this.bairro = bairro;
+        this.localidade = localidade;
+        this.uf = uf;
+        this.ativo = ativo;
     }
 
     async criar() {
-        return prisma.exemplo.create({
+        return prisma.cliente.create({
             data: {
                 nome: this.nome,
-                estado: this.estado,
-                preco: this.preco,
+                telefone: this.telefone,
+                email: this.email,
+                cpf: this.cpf,
+                cep: this.cep,
+                logradouro: this.logradouro,
+                bairro: this.bairro,
+                localidade: this.localidade,
+                uf: this.uf,
+                ativo: this.ativo,
             },
         });
     }
 
     async atualizar() {
-        return prisma.exemplo.update({
+        return prisma.cliente.update({
             where: { id: this.id },
             data: { nome: this.nome, estado: this.estado, preco: this.preco },
         });
     }
 
     async deletar() {
-        return prisma.exemplo.delete({ where: { id: this.id } });
+        return prisma.cliente.delete({ where: { id: this.id } });
     }
 
     static async buscarTodos(filtros = {}) {

@@ -14,7 +14,6 @@ export default class ProdutosModel {
         return prisma.produto.create({
             data: {
                 nome: this.nome,
-                estado: this.estado,
                 descricao: this.descricao,
                 categoria: this.categoria,
                 preco: this.preco,
