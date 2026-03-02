@@ -50,12 +50,12 @@ export default class ClienteModel {
         if (filtros.estado !== undefined) where.estado = filtros.estado === 'true';
         if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
 
-        return prisma.exemplo.findMany({ where });
+        return prisma.cliente.findMany({ where });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.exemplo.findUnique({ where: { id } });
+        const data = await prisma.cliente.findUnique({ where: { id } });
         if (!data) return null;
-        return new ExemploModel(data);
+        return new ClienteModel(data);
     }
 }
