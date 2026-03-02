@@ -62,13 +62,13 @@ export const buscarPorId = async (req, res) => {
             return res.status(400).json({ error: 'O ID enviado não é um número válido.' });
         }
 
-        const exemplo = await ExemploModel.buscarPorId(parseInt(id));
+        const produto = await ProdutosModel.buscarPorId(parseInt(id));
 
-        if (!exemplo) {
+        if (!produto) {
             return res.status(404).json({ error: 'Registro não encontrado.' });
         }
 
-        res.json({ data: exemplo });
+        res.json({ data: produto });
     } catch (error) {
         console.error('Erro ao buscar:', error);
         res.status(500).json({ error: 'Erro ao buscar registro.' });
