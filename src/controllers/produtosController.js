@@ -1,4 +1,4 @@
-import ExemploModel from '../models/ExemploModel.js';
+import ProdutosModel from '../models/ProdutosModel.js';
 
 export const criar = async (req, res) => {
     try {
@@ -6,13 +6,31 @@ export const criar = async (req, res) => {
             return res.status(400).json({ error: 'Corpo da requisição vazio. Envie os dados!' });
         }
 
-        const { nome, estado, preco } = req.body;
+        const { nome, descricao, categoria, preco, disponivel } = req.body;
 
         if (!nome) return res.status(400).json({ error: 'O campo "nome" é obrigatório!' });
-        if (preco === undefined || preco === null) return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
+        if (!categoria) return res.status(400).json({ error: 'O campo "categoria" é obrigatório!' });
 
-        const exemplo = new ExemploModel({ nome, estado, preco: parseFloat(preco) });
-        const data = await exemplo.criar();
+        const categoriaUpper = categoria.toUpperCase();
+
+        const categoriasValidas = ["LANCHE", "BEBIDA", "SOBREMESA", "COMBO"];
+        if (!categoriasValidas.includes(categoriaUpper)) {
+            return res.status(400).json({
+                total: 0,
+                mensagem: `Categoria inválido. Categorias aceitas: ${categoriasValidas.join(", ")}`
+            });
+        }
+
+        if (preco === undefined || preco === null) return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
+        const novoProduto = new ProdutosModel({ nome, descricao, categoria: categoriaUpper, preco: parseFloat(preco), disponivel });
+
+        if (preco <= 0) {
+            return res.status(400).json({
+                error: 'Preco deve ser maior que 0'
+            });
+        }
+
+        const data = await novoProduto.criar();
 
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
     } catch (error) {
