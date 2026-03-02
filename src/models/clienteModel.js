@@ -35,13 +35,30 @@ export default class ClienteModel {
     async atualizar() {
         return prisma.cliente.update({
             where: { id: this.id },
-            data: { nome: this.nome, estado: this.estado, preco: this.preco },
+            data: { 
+                nome: this.nome,
+                telefone: this.telefone,
+                email: this.email,
+                ativo: this.ativo
+            },
         });
     }
 
     async deletar() {
         return prisma.cliente.delete({ where: { id: this.id } });
+
     }
+    static async buscarTodos(filtros = {}) {
+
+        const where = {};
+
+        if(filtros.nome) where.nome = { contains: filtros.nome, mode : 'insensitive' };
+        if(filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
+
+        return prisma.cliente.findMany({where})
+
+    }
+    
 
     static async buscarTodos(filtros = {}) {
         const where = {};
