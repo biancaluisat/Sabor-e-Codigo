@@ -10,7 +10,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
     console.log('🧹 Limpando dados existentes...');
-    // A ordem importa por causa das relações (FK)
+
     await prisma.itemPedido.deleteMany();
     await prisma.pedido.deleteMany();
     await prisma.cliente.deleteMany();
@@ -51,7 +51,7 @@ async function main() {
     });
 
     console.log('📝 Inserindo Pedidos e Itens...');
-    
+
 
     await prisma.pedido.create({
         data: {
@@ -67,7 +67,7 @@ async function main() {
         }
     });
 
-    
+
     await prisma.pedido.create({
         data: {
             clienteId: c2.id,
@@ -81,7 +81,7 @@ async function main() {
         }
     });
 
-    
+
     await prisma.pedido.create({
         data: {
             clienteId: c3.id,
