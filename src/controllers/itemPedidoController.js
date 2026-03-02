@@ -1,4 +1,4 @@
-import ItemPedidoModel from "../models/itemPedidoModel.js";
+import ItemPedidoModel from "../models/ItemPedidoModel.js";
 
 export const criar = async (req, res) => {
     try {
@@ -88,10 +88,10 @@ export const deletar = async (req, res) => {
             })
         }
 
-        const item = new ItemPedidoModel({ id }); 
-        
-        await item.deletar(); 
-        
+        const item = new ItemPedidoModel({ id });
+
+        await item.deletar();
+
         res.json({ message: 'Removido com sucesso!' });
     } catch (error) {
         res.status(500).json({ error: 'Erro ao deletar.' });

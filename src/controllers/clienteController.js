@@ -17,16 +17,16 @@ export const criar = async (req, res) => {
 
 
         if (!nome || !telefone || !email || !cpf || !cep) {
-            return res.status(400).json({ 
-                
+            return res.status(400).json({
+
                 message: 'Todos os campos são obrigatórios'
 
             });
         }
 
         if (cpf.length !== 11) {
-            return res.status(400).json({ 
-                
+            return res.status(400).json({
+
                 message: 'O CPF deve ter pelo menos 11 dígitos'
 
             });
@@ -38,7 +38,7 @@ export const criar = async (req, res) => {
         })
 
         if (cep.length !== 8) {
-            return res.status(400).json({ 
+            return res.status(400).json({
 
                 message: 'O CEP deve ter pelo menos 8 dígitos'
 
@@ -59,14 +59,14 @@ export const criar = async (req, res) => {
         });
 
         const data = await cliente.criar();
-        res.status(201).json({ 
-            
+        res.status(201).json({
+
             message: 'Cliente criado!'
 
          });
     } catch (error) {
         res.status(500).json({
-            
+
              message: 'Erro ao tentar salvar o cliente.'
 
             });
@@ -79,10 +79,10 @@ export const buscarTodos = async (req, res) => {
         res.json(clientes);
     } catch (error) {
         res.status(500).json({
-        
+
 
             message: 'Erro ao tentar busca clientes.'
-        
+
         });
     }
 };
@@ -93,20 +93,20 @@ export const buscarPorId = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({ 
-                
+            return res.status(404).json({
+
                 message: `O cliente com o id ${id} não existe.`
-            
+
             });
         }
 
         res.json(cliente);
     } catch (error) {
-        res.status(500).json({ 
-            
+        res.status(500).json({
+
             error: 'Erro ao buscar cliente.',
             message: 'Erro ao buscar o cliente pelo o id informado.'
-        
+
         });
     }
 };
@@ -117,11 +117,11 @@ export const atualizar = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({ 
-                
-                
+            return res.status(404).json({
+
+
                 message: 'O cliente com id informado não foi encontrado'
-            
+
             });
         }
 
@@ -132,18 +132,18 @@ export const atualizar = async (req, res) => {
                 cliente[campo] = req.body[campo];
             }
         });
-        
+
         const data = await cliente.atualizar();
-        res.json({ 
-            
+        res.json({
+
             message: 'Atualizado com sucesso!'
-        
+
         });
     } catch (error) {
-        res.status(500).json({ 
-            
+        res.status(500).json({
+
             message: 'Erro ao tentar atualizar o cliente.'
-        
+
         });
     }
 };
@@ -154,33 +154,33 @@ export const deletar = async (req, res) => {
 
         const temPedidos = await ClienteModel.verificarPedidosAbertos(id);
         if (temPedidos) {
-            return res.status(400).json({ 
-                
+            return res.status(400).json({
+
                 message: 'Cliente tem pedidos abertos!'
-            
+
             });
         }
 
         const cliente = await ClienteModel.buscarPorId(id);
         if (!cliente) {
-            return res.status(404).json({ 
-                
+            return res.status(404).json({
+
                 message: 'Cliente não encontrado.'
-            
+
             });
         }
 
         await cliente.deletar();
-        res.json({ 
-            
+        res.json({
+
             message: 'Removido com sucesso!'
-        
+
         });
     } catch (error) {
-        res.status(500).json({ 
-            
+        res.status(500).json({
+
             message: 'Erro ao deletar.'
-        
+
         });
     }
 };
