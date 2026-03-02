@@ -121,3 +121,36 @@ export const adicionarItem = async (req, res) => {
         return res.status(500).json({ erro: "Erro interno ao adicionar item ao pedido." });
     }
 };
+
+export const cancelar = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (isNaN(id)) {
+            return res.status(400).json({ erro: "ID inválido. Informe um número válido." });
+        }
+
+        const pedido = await PedidoModel.buscarPorId(parseInt(id));
+
+        if (!pedido) {
+            return res.status(404).json({ erro: "Pedido não encontrado." });
+        }
+
+        const data = await pedido.cancelar();
+
+        return res.status(200).json({
+            mensagem: "Pedido cancelado com sucesso.",
+            data
+        });
+
+    } catch (error) {
+        console.error("Erro ao cancelar pedido:", error);
+
+        if (error.message) {
+            return res.status(400).json({ erro: error.message });
+        }
+
+        return res.status(500).json({ erro: "Erro interno ao cancelar pedido." });
+    }
+};
+
