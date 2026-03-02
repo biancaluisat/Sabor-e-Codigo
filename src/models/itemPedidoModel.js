@@ -43,8 +43,11 @@ export default class ItemPedidoModel {
         return data.map(item => new ItemPedidoModel(item));
     };
 
-    static async pegarPorId(id){
-        const data = await prisma.itemPedido.findUnique({ where: { id } });
+    static async buscarPorId(id) {
+        const data = await prisma.itemPedido.findUnique({
+            where: { id: Number(id) }
+        });
+
         if (!data) return null;
         return new ItemPedidoModel(data);
     }

@@ -43,10 +43,15 @@ export const buscarTodos = async (req, res) => {
 export const buscarPorId = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'O ID fornecido é inválido.' });
+        }
+
         const item = await ItemPedidoModel.buscarPorId(id);
 
         if (!item) {
-            return res.status(404).json({ error: `o itemPedido com id:${id} não foi encontrado` });
+            return res.status(404).json({ error: `O itemPedido com id:${id} não foi encontrado` });
         }
 
         res.json(item);
@@ -54,7 +59,6 @@ export const buscarPorId = async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar item.' });
     }
 };
-
 export const atualizar = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
