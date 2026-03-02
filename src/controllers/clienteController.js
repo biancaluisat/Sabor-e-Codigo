@@ -4,6 +4,18 @@ export const criar = async (req, res) => {
     try {
         const { nome, telefone, email, cpf, cep } = req.body;
 
+        const EnderecoViaCEP = async (cep) => {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                if (data.error) return null;
+                return data;
+            } catch (error) {
+                return null;
+            }
+        };
+
+
         if (!nome || !telefone || !email || !cpf || !cep) {
             return res.status(400).json({
 
@@ -20,6 +32,11 @@ export const criar = async (req, res) => {
             });
         }
 
+        const endereco = await EnderecoViaCEP(cep);
+        if (!endereco) return res.status(400).json({
+            message: 'CEP invalido ou não encontrado'
+        })
+
         if (cep.length !== 8) {
             return res.status(400).json({
 
@@ -34,10 +51,10 @@ export const criar = async (req, res) => {
             email,
             cpf,
             cep,
-            logradouro: null,
-            bairro: null,
-            localidade: null,
-            uf: null,
+            logradouro: endereco.logradouro || null,
+            bairro: endereco.bairro || null,
+            localidade: endereco.localidade || null,
+            uf: endereco.uf || null,
             ativo: true
         });
 

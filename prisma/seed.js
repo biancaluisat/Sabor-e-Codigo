@@ -10,7 +10,7 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
     console.log('🧹 Limpando dados existentes...');
-
+    
     await prisma.itemPedido.deleteMany();
     await prisma.pedido.deleteMany();
     await prisma.cliente.deleteMany();
