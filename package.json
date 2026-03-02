@@ -1,7 +1,7 @@
 {
-  "name": "sabor-e-codigo",
+  "name": "Sabor-e-Codigo",
   "version": "1.0.0",
-  "description": "sabor e codigo",
+  "description": "",
   "main": "server.js",
   "type": "module",
   "private": true,
