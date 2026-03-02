@@ -18,6 +18,12 @@ export default class itemPedidoModel {
                 quantidade: this.quantidade,
                 precoUnitario: this.precoUnitario
             }
-        })
+        });
+    }
+    async atualizar () {
+        return prisma.itemPedido.update({
+            where: {id: this.id},
+            data: {pedido: this.pedido, produto: this.produto, quantidade: this.quantidade, precoUnitario: this.precoUnitario}
+        });
     }
 }
