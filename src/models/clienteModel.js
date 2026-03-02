@@ -46,33 +46,20 @@ export default class ClienteModel {
 
     async deletar() {
         return prisma.cliente.delete({ where: { id: this.id } });
-
     }
-    static async buscarTodos(filtros = {}) {
-
-        const where = {};
-
-        if(filtros.nome) where.nome = { contains: filtros.nome, mode : 'insensitive' };
-        if(filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
-
-        return prisma.cliente.findMany({where})
-
-    }
-    
 
     static async buscarTodos(filtros = {}) {
         const where = {};
 
         if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.estado !== undefined) where.estado = filtros.estado === 'true';
-        if (filtros.preco !== undefined) where.preco = parseFloat(filtros.preco);
+        if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
 
-        return prisma.exemplo.findMany({ where });
+        return prisma.cliente.findMany({ where });
     }
 
     static async buscarPorId(id) {
-        const data = await prisma.exemplo.findUnique({ where: { id } });
+        const data = await prisma.cliente.findUnique({ where: { id } });
         if (!data) return null;
-        return new ExemploModel(data);
+        return new this(data);
     }
 }
