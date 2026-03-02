@@ -32,7 +32,7 @@ model Produto {
   preco      Decimal      @db.Decimal(10, 2)
   disponivel Boolean      @default(true)
 
-  // Adicionado para fechar a relação com ItemPedido
+
   itens      ItemPedido[]
 
   @@map("produtos")
@@ -59,7 +59,7 @@ model ItemPedido {
   quantidade    Int
   precoUnitario Decimal @db.Decimal(10, 2)
 
-  @@map("itens_pedido")
+  @@map("itemPedido")
 }
 
 enum Categoria {
