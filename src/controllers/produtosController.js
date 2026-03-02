@@ -17,18 +17,19 @@ export const criar = async (req, res) => {
         if (!categoriasValidas.includes(categoriaUpper)) {
             return res.status(400).json({
                 total: 0,
-                mensagem: `Categoria inválido. Categorias aceitas: ${categoriasValidas.join(", ")}`
+                mensagem: `Categoria inválida. Categorias aceitas: ${categoriasValidas.join(", ")}`
             });
         }
 
         if (preco === undefined || preco === null) return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
-        const novoProduto = new ProdutosModel({ nome, descricao, categoria: categoriaUpper, preco: parseFloat(preco), disponivel });
-
         if (preco <= 0) {
             return res.status(400).json({
                 error: 'Preco deve ser maior que 0'
             });
         }
+
+        const novoProduto = new ProdutosModel({ nome, descricao, categoria: categoriaUpper, preco: parseFloat(preco), disponivel });
+
 
         const data = await novoProduto.criar();
 
@@ -85,17 +86,39 @@ export const atualizar = async (req, res) => {
             return res.status(400).json({ error: 'Corpo da requisição vazio. Envie os dados!' });
         }
 
-        const exemplo = await ExemploModel.buscarPorId(parseInt(id));
+        const produto = await ProdutosModel.buscarPorId(parseInt(id));
 
-        if (!exemplo) {
+        if (!produto) {
             return res.status(404).json({ error: 'Registro não encontrado para atualizar.' });
         }
 
-        if (req.body.nome !== undefined) exemplo.nome = req.body.nome;
-        if (req.body.estado !== undefined) exemplo.estado = req.body.estado;
-        if (req.body.preco !== undefined) exemplo.preco = parseFloat(req.body.preco);
+        if (req.body.nome !== undefined) produto.nome = req.body.nome;
+        if (req.body.descricao !== undefined) produto.descricao = req.body.descricao;
+        
+        if (req.body.categoria !== undefined) { 
+            const categoriaUpper = req.body.categoria.toUpperCase();
+            
+            const categoriasValidas = ["LANCHE", "BEBIDA", "SOBREMESA", "COMBO"];
+            if (!categoriasValidas.includes(categoriaUpper)) {
+                return res.status(400).json({
+                    total: 0,
+                    mensagem: `Categoria inválida. Categorias aceitas: ${categoriasValidas.join(", ")}`
+                });
+            }
+            produto.categoria = categoriaUpper;
+        }
 
-        const data = await exemplo.atualizar();
+        if (req.body.preco !== undefined) {
+            if (parseFloat(req.body.preco) <= 0) {
+                return res.status(400).json({
+                    error: 'Preco deve ser maior que 0'
+                });
+            }
+            produto.preco = parseFloat(req.body.preco);
+        }
+        if (req.body.disponivel !== undefined) produto.disponivel = req.body.disponivel;
+
+        const data = await produto.atualizar();
 
         res.json({ message: `O registro "${data.nome}" foi atualizado com sucesso!`, data });
     } catch (error) {

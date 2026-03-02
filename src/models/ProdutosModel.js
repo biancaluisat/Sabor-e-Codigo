@@ -25,8 +25,13 @@ export default class ProdutosModel {
     async atualizar() {
         return prisma.produto.update({
             where: { id: this.id },
-            data: { nome: this.nome, estado: this.estado, preco: this.preco },
-        });
+            data: {
+                nome: this.nome,
+                descricao: this.descricao,
+                categoria: this.categoria,
+                preco: this.preco,
+                disponivel: this.disponivel,
+        }});
     }
 
     async deletar() {
