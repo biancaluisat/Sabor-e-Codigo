@@ -1,4 +1,5 @@
 import PedidoModel from '../models/pedidoModel.js';
+import ProdutosModel from '../models/ProdutosModel.js';
 
 export const criar = async (req, res) => {
     try {
@@ -99,6 +100,14 @@ export const adicionarItem = async (req, res) => {
 
         if (!pedido) {
             return res.status(404).json({ erro: "Pedido não encontrado." });
+        }
+
+        const produto = await ProdutosModel.buscarPorId(req.body.produtoId);
+
+        if (!produto.disponivel) {
+            return res.status(400).json({
+                mensagem: "Este produto não está disponível no momento"
+            });
         }
 
         const item = await pedido.adicionarItem({
