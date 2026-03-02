@@ -1,7 +1,8 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class ClienteModel {
-        #cpf; #cep;
+        #cpf;
+        #cep;
 
     constructor({ id, nome, telefone, email, cpf, cep, logradouro = null, bairro = null, localidade = null, uf = null, ativo = true } = {}) {
         this.id = id;
@@ -66,4 +67,25 @@ export default class ClienteModel {
         if (!data) return null;
         return new this(data);
     }
-}
+
+    static async verificarPedidoAberto(clienteId) {
+        const pedidosAbertos = await prisma.pedido.count({
+            where: {
+                status: "ABERTO"
+            }
+        });
+        return pedidosAbertos > 0;
+    }
+
+    static async buscarTodos(filtros = {}) {
+        const where = {};
+
+        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'intensitive'};
+
+        if (filtros.cpf) where.cpf = filtros.cpf;
+
+        if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
+
+        return prisma.cliente.findMany({ where });
+    }
+};
