@@ -7,8 +7,7 @@ export const criar = async (req, res) => {
         if (!nome || !telefone || !email || !cpf || !cep) {
             return res.status(400).json({ 
                 
-                error: 'Todos os campos acima solicitados acima, são obrigatórios!',
-                message: 'Todos os campos são obrigatórios para o cadastro do cliente.'
+                message: 'Todos os campos são obrigatórios'
 
             });
         }
@@ -16,8 +15,7 @@ export const criar = async (req, res) => {
         if (cpf.length !== 11) {
             return res.status(400).json({ 
                 
-                error: 'O CPF deve ter pelo menos 11 dígitos.',
-                message: 'O CPF deve ter pelo menos 11 dígitos para ser cadastrado.'
+                message: 'O CPF deve ter pelo menos 11 dígitos'
 
             });
         }
@@ -25,8 +23,7 @@ export const criar = async (req, res) => {
         if (cep.length !== 8) {
             return res.status(400).json({ 
 
-                error: error,
-                message: 'O CEP deve ter pelo menos 8 dígitos para ser cadastrado.'
+                message: 'O CEP deve ter pelo menos 8 dígitos'
 
              });
         }
@@ -53,7 +50,6 @@ export const criar = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             
-             error: 'Erro ao salvar o cliente.',
              message: 'Erro ao tentar salvar o cliente.'
 
             });
@@ -66,9 +62,9 @@ export const buscarTodos = async (req, res) => {
         res.json(clientes);
     } catch (error) {
         res.status(500).json({
-            
-            error: 'Erro ao buscar clientes.' ,
-            message: 'Erro ao tentar buscar pelos clientes.'
+        
+
+            message: 'Erro ao tentar busca clientes.'
         
         });
     }
@@ -82,8 +78,7 @@ export const buscarPorId = async (req, res) => {
         if (!cliente) {
             return res.status(404).json({ 
                 
-                error: 'Cliente não encontrado.',
-                message: 'O cliente com o id informado não existe.'
+                message: `O cliente com o id ${id} não existe.`
             
             });
         }
@@ -107,27 +102,29 @@ export const atualizar = async (req, res) => {
         if (!cliente) {
             return res.status(404).json({ 
                 
-                error: 'Cliente não encontrado.',
-                message: 'O cliente com id informado não foi encontrado para ser atualizado'
+                
+                message: 'O cliente com id informado não foi encontrado'
             
             });
         }
 
-        if (req.body.nome) cliente.nome = req.body.nome;
-        if (req.body.telefone) cliente.telefone = req.body.telefone;
-        if (req.body.email) cliente.email = req.body.email;
-        if (req.body.ativo !== undefined) cliente.ativo = req.body.ativo;
+        const camposPermitidos = [ 'nome', 'telefone', 'email', 'cpf', 'cep' ];
 
+        camposPermitidos.forEach(campo => {
+            if (req.body[campo] !== undefined) {
+                cliente[campo] = req.body[campo];
+            }
+        });
+        
         const data = await cliente.atualizar();
         res.json({ 
             
-            message: 'Atualizado com sucesso!', data 
+            message: 'Atualizado com sucesso!'
         
         });
     } catch (error) {
         res.status(500).json({ 
             
-            error: 'Erro ao atualizar.',
             message: 'Erro ao tentar atualizar o cliente.'
         
         });
@@ -142,7 +139,7 @@ export const deletar = async (req, res) => {
         if (temPedidos) {
             return res.status(400).json({ 
                 
-                error: 'Cliente tem pedidos abertos!'
+                message: 'Cliente tem pedidos abertos!'
             
             });
         }
@@ -151,7 +148,7 @@ export const deletar = async (req, res) => {
         if (!cliente) {
             return res.status(404).json({ 
                 
-                error: 'Cliente não encontrado.'
+                message: 'Cliente não encontrado.'
             
             });
         }
@@ -165,7 +162,7 @@ export const deletar = async (req, res) => {
     } catch (error) {
         res.status(500).json({ 
             
-            error: 'Erro ao deletar.'
+            message: 'Erro ao deletar.'
         
         });
     }
