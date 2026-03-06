@@ -27,51 +27,35 @@ export const criar = async (req, res) => {
         const { nome, telefone, email, cpf, cep } = req.body;
 
         if (!nome || !telefone || !email || !cpf || !cep) {
-            return res.status(400).json({
+            return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+        }
 
-                message: 'Todos os campos são obrigatórios'
+        if (nome.length < 3 || nome.length > 100) {
+            return res.status(400).json({ message: 'O nome deve ter entre 3 e 100 caracteres' });
+        }
 
-            });
+        if (cep.length !== 9) {
+            return res.status(400).json({ message: 'O CEP deve ter exatamente 9 dígitos (ex: 12345-678)' });
         }
 
         const cpfLimpo = limparTexto(cpf);
         if (cpfLimpo.length !== 11) {
-            return res.status(400).json({
-
-                message: 'O CPF deve ter pelo menos 11 digitos'
-
-            });
-        }
-
-        const endereco = await EnderecoViaCEP(cep);
-        if(!endereco) {
-            return res.status(400).json({
-
-                message: 'CEP invalido ou nao endereco encontrado na API ViaCEP'
-
-            });
+            return res.status(400).json({ message: 'O CPF deve ter exatamente 11 dígitos' });
         }
 
         const telLimpo = limparTexto(telefone);
         if (telLimpo.length < 10 || telLimpo.length > 11) {
-            return res.status(400).json({
-
-                message: 'O telefone deve ter 10 ou 11 digitos'
-
-            });
+            return res.status(400).json({ message: 'O telefone deve ter 10 ou 11 dígitos' });
         }
 
-        if (cep.length !== 9) {
-            return res.status(400).json({
-
-                message: 'O CEP deve ter pelo menos 9 dígitos'
-
-             });
+        const endereco = await EnderecoViaCEP(cep);
+        if (!endereco) {
+            return res.status(400).json({ message: 'CEP inválido ou não encontrado' });
         }
 
         const cliente = new ClienteModel({
             nome,
-            telefone,
+            telefone: telLimpo,
             email,
             cpf: cpfLimpo,
             cep,
@@ -83,17 +67,13 @@ export const criar = async (req, res) => {
         });
 
         await cliente.criar();
-        res.status(201).json({
+        res.status(201).json({ message: 'Cliente criado com sucesso!' });
 
-            message: 'Cliente criado!'
-
-         });
     } catch (error) {
-        res.status(500).json({
-
-             message: 'Erro ao tentar salvar o cliente.'
-
-            });
+        if (error.code === 'P2002') {
+            return res.status(400).json({ message: 'CPF ou Email já cadastrado no sistema' });
+        }
+        res.status(500).json({ message: 'Erro ao tentar salvar o cliente' });
     }
 };
 
