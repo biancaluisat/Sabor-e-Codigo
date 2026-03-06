@@ -30,6 +30,14 @@ export default class ClienteModel {
         this.ativo = ativo;
     }
 
+
+    get cpf() {
+        return this.#cpf;
+    }
+    get cep() {
+        return this.#cep;
+    }
+
     async criar() {
         return prisma.cliente.create({
             data: {
@@ -56,6 +64,10 @@ export default class ClienteModel {
                 email: this.email,
                 cpf: this.#cpf,
                 cep: this.#cep,
+                logradouro: this.logradouro,
+                bairro: this.bairro,
+                localidade: this.localidade,
+                uf: this.uf,
                 ativo: this.ativo,
             },
         });
@@ -68,8 +80,17 @@ export default class ClienteModel {
     static async buscarTodos(filtros = {}) {
         const where = {};
 
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
+        if (filtros.nome) {
+            where.nome = { contains: filtros.nome, mode: 'insensitive' };
+        }
+
+        if (filtros.cpf) {
+            where.cpf = filtros.cpf;
+        }
+
+        if (filtros.ativo !== undefined) {
+            where.ativo = filtros.ativo === 'true';
+        }
 
         return prisma.cliente.findMany({ where });
     }
@@ -80,39 +101,26 @@ export default class ClienteModel {
         return new this(data);
     }
 
-    static async verificarPedidoAberto(clienteId) {
+    static async verificarPedidosAbertos(clienteId) {
+        
         const pedidosAbertos = await prisma.pedido.count({
             where: {
+                clienteId: clienteId,
                 status: 'ABERTO',
             },
         });
         return pedidosAbertos > 0;
     }
 
-    static async buscarTodos(filtros = {}) {
-        const where = {};
-
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'intensitive' };
-
-        if (filtros.cpf) where.cpf = filtros.cpf;
-
-        if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
-
-        return prisma.cliente.findMany({ where });
-    }
-
-
-
     static async buscarPorCamposUnicos({ email, cpf, telefone }) {
         try {
-            const cliente = await prisma.cliente.findFirst({
+            return await prisma.cliente.findFirst({
                 where: {
                     OR: [{ email: email }, { cpf: cpf }, { telefone: telefone }],
                 },
             });
-            return cliente;
         } catch (error) {
             throw new Error('Erro ao buscar campos únicos: ' + error.message);
         }
     }
-};
+}
