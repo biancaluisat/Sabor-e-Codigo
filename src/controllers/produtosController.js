@@ -16,6 +16,12 @@ export const criar = async (req, res) => {
             });
         }
 
+        if (descricao.length > 255) {
+            return res.status(400).json({
+                mensagem: 'A descrição não pode ter mais que 255 caracteres'
+            });
+        }
+
         if (!categoria) return res.status(400).json({ error: 'O campo "categoria" é obrigatório!' });
 
         const categoriaUpper = categoria.toUpperCase();
