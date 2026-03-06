@@ -80,11 +80,14 @@ export default class ClienteModel {
         return new this(data);
     }
 
-    static async verificarPedidoAberto(clienteId) {
+    static async verificarPedidosAbertos(clienteId) {
         const pedidosAbertos = await prisma.pedido.count({
             where: {
-                status: 'ABERTO',
-            },
+
+                clienteId: clienteId,
+                status: "ABERTO"
+            }
+
         });
         return pedidosAbertos > 0;
     }
