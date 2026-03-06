@@ -1,10 +1,16 @@
 import ClienteModel from '../models/clienteModel.js';
 
-export const criar = async (req, res) => {
-    try {
-        const { nome, telefone, email, cpf, cep } = req.body;
+const limparTexto = (texto) => {
+    if (!texto) return '';
+    return texto.split('')
+        .filter(caractere => caractere >= '0' && caractere <= '9')
+        .join('');
+};
 
-        const EnderecoViaCEP = async (cep) => {
+const EnderecoViaCEP = async (cep) => {
+    const cepLimpo = limparTexto(cep);
+    if (cepLimpo.length !== 8) return null;
+
             try {
                 const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
                 const data = await response.json();
@@ -16,6 +22,10 @@ export const criar = async (req, res) => {
         };
 
 
+export const criar = async (req, res) => {
+    try {
+        const { nome, telefone, email, cpf, cep } = req.body;
+
         if (!nome || !telefone || !email || !cpf || !cep) {
             return res.status(400).json({
 
@@ -24,23 +34,37 @@ export const criar = async (req, res) => {
             });
         }
 
-        if (cpf.length !== 11) {
+        const cpfLimpo = limparTexto(cpf);
+        if (cpfLimpo.length !== 11) {
             return res.status(400).json({
 
-                message: 'O CPF deve ter pelo menos 11 dígitos'
+                message: 'O CPF deve ter pelo menos 11 digitos'
 
             });
         }
 
         const endereco = await EnderecoViaCEP(cep);
-        if (!endereco) return res.status(400).json({
-            message: 'CEP invalido ou não encontrado'
-        })
-
-        if (cep.length !== 8) {
+        if(!endereco) {
             return res.status(400).json({
 
-                message: 'O CEP deve ter pelo menos 8 dígitos'
+                message: 'CEP invalido ou nao endereco encontrado na API ViaCEP'
+
+            });
+        }
+
+        const telLimpo = limparTexto(telefone);
+        if (telLimpo.length < 10 || telLimpo.length > 11) {
+            return res.status(400).json({
+
+                message: 'O telefone deve ter 10 ou 11 digitos'
+
+            });
+        }
+
+        if (cep.length !== 9) {
+            return res.status(400).json({
+
+                message: 'O CEP deve ter pelo menos 9 dígitos'
 
              });
         }
@@ -49,16 +73,16 @@ export const criar = async (req, res) => {
             nome,
             telefone,
             email,
-            cpf,
+            cpf: cpfLimpo,
             cep,
-            logradouro: endereco.logradouro || null,
-            bairro: endereco.bairro || null,
-            localidade: endereco.localidade || null,
-            uf: endereco.uf || null,
+            logradouro: endereco.logradouro,
+            bairro: endereco.bairro,
+            localidade: endereco.localidade,
+            uf: endereco.uf,
             ativo: true
         });
 
-        const data = await cliente.criar();
+        await cliente.criar();
         res.status(201).json({
 
             message: 'Cliente criado!'
@@ -85,6 +109,15 @@ export const buscarTodos = async (req, res) => {
 
         });
     }
+
+    const conflito = await ClienteModel.buscarPorCamposUnicos({ email, cpf, telefone });
+        
+        if (conflito) {
+            return res.status(400).json({ 
+                message: 'CPF, Email ou Telefone já cadastrado no sistema.' 
+            });
+        }
+
 };
 
 export const buscarPorId = async (req, res) => {
