@@ -80,13 +80,23 @@ export const criar = async (req, res) => {
         });
 
         await cliente.criar();
-        return res.status(201).json({ message: 'Cliente criado com sucesso!' });
+        return res.status(201).json({
+
+            message: 'Cliente criado com sucesso!',
+            cliente
+        });
 
     } catch (error) {
-        if (error.code === 'P2002') {
-            return res.status(400).json({ message: 'CPF ou Email já cadastrado no sistema' });
+        if (error.code) {
+            return res.status(400).json({
+                message:
+                    'CPF ou Email já cadastrado no sistema',
+            });
         }
-        return res.status(500).json({ message: 'Erro interno ao tentar salvar o cliente.' });
+        return res.status(500).json({
+            error: error.message,
+            message: 'Erro interno ao tentar salvar o cliente.',
+        });
     }
 };
 
