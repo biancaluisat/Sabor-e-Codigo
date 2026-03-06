@@ -1,4 +1,4 @@
-import ClienteModel from '../models/clienteModel.js';
+import ClienteModel from '../models/ClienteModel.js';
 
 const limparTexto = (texto) => {
     if (!texto) return '';
@@ -152,21 +152,35 @@ export const atualizar = async (req, res) => {
         if (!cliente) {
             return res.status(404).json({
 
-
                 message: 'O cliente com id informado não foi encontrado'
 
             });
         }
 
-        const camposPermitidos = [ 'nome', 'telefone', 'email', 'cpf', 'cep' ];
+        if (req.body.cep && req.body.cep !== cliente.cep) {
+            const novoEndereco = await EnderecoViaCEP(req.body.cep);
+                if (novoEndereco) {
+                    cliente.logradouro = novoEndereco.logradouro;
+                    cliente.bairro = novoEndereco.bairro;
+                    cliente.localidade = novoEndereco.localidade;
+                    cliente.uf = novoEndereco.uf;
+
+                }
+            }
+
+        const camposPermitidos = [ 'nome', 'telefone', 'email', 'cpf', 'cep', 'ativo' ];
 
         camposPermitidos.forEach(campo => {
             if (req.body[campo] !== undefined) {
-                cliente[campo] = req.body[campo];
+                if (campo === 'cpf' || campo === 'telefone') {
+                    cliente[campo] = limparTexto(req.body[campo]);
+                } else {
+                    cliente[campo] = req.body[campo];
+                }
             }
         });
 
-        const data = await cliente.atualizar();
+        await cliente.atualizar();
         res.json({
 
             message: 'Atualizado com sucesso!'
@@ -185,8 +199,8 @@ export const deletar = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
 
-        const temPedidos = await ClienteModel.verificarPedidosAbertos(id);
-        if (temPedidos) {
+        const temPedidosAbertos = await ClienteModel.verificarPedidosAbertos(id);
+        if (temPedidosAbertos) {
             return res.status(400).json({
 
                 message: 'Cliente tem pedidos abertos!'
