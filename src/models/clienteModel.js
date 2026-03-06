@@ -1,10 +1,22 @@
 import prisma from '../utils/prismaClient.js';
 
 export default class ClienteModel {
-        #cpf;
-        #cep;
+    #cpf;
+    #cep;
 
-    constructor({ id, nome, telefone, email, cpf, cep, logradouro = null, bairro = null, localidade = null, uf = null, ativo = true } = {}) {
+    constructor({
+        id,
+        nome,
+        telefone,
+        email,
+        cpf,
+        cep,
+        logradouro = null,
+        bairro = null,
+        localidade = null,
+        uf = null,
+        ativo = true,
+    } = {}) {
         this.id = id;
         this.nome = nome;
         this.telefone = telefone;
@@ -38,7 +50,7 @@ export default class ClienteModel {
     async atualizar() {
         return prisma.cliente.update({
             where: { id: this.id },
-            data: { 
+            data: {
                 nome: this.nome,
                 telefone: this.telefone,
                 email: this.email,
@@ -71,9 +83,11 @@ export default class ClienteModel {
     static async verificarPedidosAbertos(clienteId) {
         const pedidosAbertos = await prisma.pedido.count({
             where: {
+
                 clienteId: clienteId,
                 status: "ABERTO"
             }
+
         });
         return pedidosAbertos > 0;
     }
@@ -81,12 +95,27 @@ export default class ClienteModel {
     static async buscarTodos(filtros = {}) {
         const where = {};
 
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'intensitive'};
+        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'intensitive' };
 
         if (filtros.cpf) where.cpf = filtros.cpf;
 
         if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
 
         return prisma.cliente.findMany({ where });
+    }
+
+
+
+    static async buscarPorCamposUnicos({ email, cpf, telefone }) {
+        try {
+            const cliente = await prisma.cliente.findFirst({
+                where: {
+                    OR: [{ email: email }, { cpf: cpf }, { telefone: telefone }],
+                },
+            });
+            return cliente;
+        } catch (error) {
+            throw new Error('Erro ao buscar campos únicos: ' + error.message);
+        }
     }
 };
