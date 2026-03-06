@@ -9,6 +9,13 @@ export const criar = async (req, res) => {
         const { nome, descricao, categoria, preco, disponivel } = req.body;
 
         if (!nome) return res.status(400).json({ error: 'O campo "nome" é obrigatório!' });
+
+        if (nome.length < 3) {
+            return res.status(400).json({
+                mensagem: 'O nome precisa de no mínimo 3 caracteres'
+            });
+        }
+
         if (!categoria) return res.status(400).json({ error: 'O campo "categoria" é obrigatório!' });
 
         const categoriaUpper = categoria.toUpperCase();
