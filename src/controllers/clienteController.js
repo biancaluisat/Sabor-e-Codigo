@@ -2,8 +2,9 @@ import ClienteModel from '../models/ClienteModel.js';
 
 const limparTexto = (texto) => {
     if (!texto) return '';
-    return texto.split('')
-        .filter(caractere => caractere >= '0' && caractere <= '9')
+    return texto
+        .split('')
+        .filter((caractere) => caractere >= '0' && caractere <= '9')
         .join('');
 };
 
@@ -11,16 +12,15 @@ const EnderecoViaCEP = async (cep) => {
     const cepLimpo = limparTexto(cep);
     if (cepLimpo.length !== 8) return null;
 
-            try {
-                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-                const data = await response.json();
-                if (data.error) return null;
-                return data;
-            } catch (error) {
-                return null;
-            }
-        };
-
+    try {
+        const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+        const data = await response.json();
+        if (data.erro) return null;
+        return data;
+    } catch (error) {
+        return null;
+    }
+};
 
 export const criar = async (req, res) => {
     try {
@@ -39,16 +39,29 @@ export const criar = async (req, res) => {
         }
 
         const cpfLimpo = limparTexto(cpf);
+        const telLimpo = limparTexto(telefone);
+        const cepLimpo = limparTexto(cep);
+
         if (cpfLimpo.length !== 11) {
             return res.status(400).json({ message: 'O CPF deve ter exatamente 11 dígitos' });
         }
 
-        const telLimpo = limparTexto(telefone);
         if (telLimpo.length < 10 || telLimpo.length > 11) {
             return res.status(400).json({ message: 'O telefone deve ter 10 ou 11 dígitos' });
         }
 
-        const endereco = await EnderecoViaCEP(cep);
+        const conflito = await ClienteModel.buscarPorCamposUnicos({
+            email,
+            cpf: cpfLimpo,
+            telefone: telLimpo,
+        });
+
+        if (conflito) {
+            let campo = conflito.cpf === cpfLimpo ? 'CPF' : conflito.email === email ? 'Email' : 'Telefone';
+            return res.status(400).json({ message: `Este ${campo} já está cadastrado.` });
+        }
+
+        const endereco = await EnderecoViaCEP(cepLimpo);
         if (!endereco) {
             return res.status(400).json({ message: 'CEP inválido ou não encontrado' });
         }
@@ -58,46 +71,32 @@ export const criar = async (req, res) => {
             telefone: telLimpo,
             email,
             cpf: cpfLimpo,
-            cep,
-            logradouro: endereco.logradouro,
-            bairro: endereco.bairro,
-            localidade: endereco.localidade,
-            uf: endereco.uf,
-            ativo: true
+            cep: cep,
+            logradouro: endereco.logradouro || null,
+            bairro: endereco.bairro || null,
+            localidade: endereco.localidade || null,
+            uf: endereco.uf || null,
+            ativo: true,
         });
 
         await cliente.criar();
-        res.status(201).json({ message: 'Cliente criado com sucesso!' });
+        return res.status(201).json({ message: 'Cliente criado com sucesso!' });
 
     } catch (error) {
         if (error.code === 'P2002') {
             return res.status(400).json({ message: 'CPF ou Email já cadastrado no sistema' });
         }
-        res.status(500).json({ message: 'Erro ao tentar salvar o cliente' });
+        return res.status(500).json({ message: 'Erro interno ao tentar salvar o cliente.' });
     }
 };
 
 export const buscarTodos = async (req, res) => {
     try {
         const clientes = await ClienteModel.buscarTodos(req.query);
-        res.json(clientes);
+        return res.json(clientes);
     } catch (error) {
-        res.status(500).json({
-
-
-            message: 'Erro ao tentar busca clientes.'
-
-        });
+        return res.status(500).json({ message: 'Erro ao tentar buscar clientes.' });
     }
-
-    const conflito = await ClienteModel.buscarPorCamposUnicos({ email, cpf, telefone });
-        
-        if (conflito) {
-            return res.status(400).json({ 
-                message: 'CPF, Email ou Telefone já cadastrado no sistema.' 
-            });
-        }
-
 };
 
 export const buscarPorId = async (req, res) => {
@@ -106,21 +105,12 @@ export const buscarPorId = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({
-
-                message: `O cliente com o id ${id} não existe.`
-
-            });
+            return res.status(404).json({ message: `O cliente com o id ${id} não existe.` });
         }
 
-        res.json(cliente);
+        return res.json(cliente);
     } catch (error) {
-        res.status(500).json({
-
-            error: 'Erro ao buscar cliente.',
-            message: 'Erro ao buscar o cliente pelo o id informado.'
-
-        });
+        return res.status(500).json({ message: 'Erro ao buscar o cliente pelo o id informado.' });
     }
 };
 
@@ -130,27 +120,22 @@ export const atualizar = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({
-
-                message: 'O cliente com id informado não foi encontrado'
-
-            });
+            return res.status(404).json({ message: 'O cliente com id informado não foi encontrado' });
         }
 
         if (req.body.cep && req.body.cep !== cliente.cep) {
             const novoEndereco = await EnderecoViaCEP(req.body.cep);
-                if (novoEndereco) {
-                    cliente.logradouro = novoEndereco.logradouro;
-                    cliente.bairro = novoEndereco.bairro;
-                    cliente.localidade = novoEndereco.localidade;
-                    cliente.uf = novoEndereco.uf;
-
-                }
+            if (novoEndereco) {
+                cliente.logradouro = novoEndereco.logradouro;
+                cliente.bairro = novoEndereco.bairro;
+                cliente.localidade = novoEndereco.localidade;
+                cliente.uf = novoEndereco.uf;
             }
+        }
 
-        const camposPermitidos = [ 'nome', 'telefone', 'email', 'cpf', 'cep', 'ativo' ];
+        const camposPermitidos = ['nome', 'telefone', 'email', 'cpf', 'cep', 'ativo'];
 
-        camposPermitidos.forEach(campo => {
+        camposPermitidos.forEach((campo) => {
             if (req.body[campo] !== undefined) {
                 if (campo === 'cpf' || campo === 'telefone') {
                     cliente[campo] = limparTexto(req.body[campo]);
@@ -161,17 +146,9 @@ export const atualizar = async (req, res) => {
         });
 
         await cliente.atualizar();
-        res.json({
-
-            message: 'Atualizado com sucesso!'
-
-        });
+        return res.json({ message: 'Atualizado com sucesso!' });
     } catch (error) {
-        res.status(500).json({
-
-            message: 'Erro ao tentar atualizar o cliente.'
-
-        });
+        return res.status(500).json({ message: 'Erro ao tentar atualizar o cliente.' });
     }
 };
 
@@ -181,33 +158,17 @@ export const deletar = async (req, res) => {
 
         const temPedidosAbertos = await ClienteModel.verificarPedidosAbertos(id);
         if (temPedidosAbertos) {
-            return res.status(400).json({
-
-                message: 'Cliente tem pedidos abertos!'
-
-            });
+            return res.status(400).json({ message: 'Cliente tem pedidos abertos!' });
         }
 
         const cliente = await ClienteModel.buscarPorId(id);
         if (!cliente) {
-            return res.status(404).json({
-
-                message: 'Cliente não encontrado.'
-
-            });
+            return res.status(404).json({ message: 'Cliente não encontrado.' });
         }
 
         await cliente.deletar();
-        res.json({
-
-            message: 'Removido com sucesso!'
-
-        });
+        return res.json({ message: 'Removido com sucesso!' });
     } catch (error) {
-        res.status(500).json({
-
-            message: 'Erro ao deletar.'
-
-        });
+        return res.status(500).json({ message: 'Erro ao deletar.' });
     }
 };
