@@ -16,7 +16,7 @@ async function main() {
     await prisma.cliente.deleteMany();
     await prisma.produto.deleteMany();
 
-    console.log('👥 Inserindo Clientes...');
+    console.log('Inserindo Clientes...');
     const c1 = await prisma.cliente.create({
         data: {
             nome: 'João Silva',
