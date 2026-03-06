@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
 });
 
 // Rotas
-app.use('/api', produtosRoute, itemPedidoRoute );
+app.use('/api', produtosRoute, itemPedidoRoute, clienteRoute, );
 
 
 app.use((req, res) => {
