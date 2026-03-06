@@ -16,7 +16,7 @@ export const criar = async (req, res) => {
             });
         }
 
-        if (descricao.length > 255) {
+        if (descricao && descricao.length > 255) {
             return res.status(400).json({
                 mensagem: 'A descrição não pode ter mais que 255 caracteres'
             });
@@ -37,7 +37,13 @@ export const criar = async (req, res) => {
         if (preco === undefined || preco === null) return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
         if (preco <= 0) {
             return res.status(400).json({
-                error: 'Preco deve ser maior que 0'
+                mensagem: 'o preco deve ser maior que 0'
+            });
+        }
+
+        if (preco * 100 % 1 !== 0) {
+            return res.status(400).json({
+                mensagem: 'O preco deve ter no máximo duas casas decimais'
             });
         }
 
@@ -105,8 +111,24 @@ export const atualizar = async (req, res) => {
             return res.status(404).json({ error: 'Registro não encontrado para atualizar.' });
         }
 
-        if (req.body.nome !== undefined) produto.nome = req.body.nome;
-        if (req.body.descricao !== undefined) produto.descricao = req.body.descricao;
+        if (req.body.nome !== undefined) {
+            if (req.body.nome.length < 3) {
+                return res.status(400).json({
+                    mensagem: 'O nome precisa de no mínimo 3 caracteres',
+                });
+            }
+
+            produto.nome = req.body.nome;
+        }
+        if (req.body.descricao !== undefined) {
+            if (req.body.descricao.length > 255) {
+                return res.status(400).json({
+                    mensagem: 'A descrição não pode ter mais que 255 caracteres',
+                });
+            }
+
+            produto.descricao = req.body.descricao;
+        }
 
         if (req.body.categoria !== undefined) {
             const categoriaUpper = req.body.categoria.toUpperCase();
@@ -124,9 +146,15 @@ export const atualizar = async (req, res) => {
         if (req.body.preco !== undefined) {
             if (parseFloat(req.body.preco) <= 0) {
                 return res.status(400).json({
-                    error: 'Preco deve ser maior que 0'
+                    mensagem: 'Preco deve ser maior que 0'
                 });
             }
+            if ((req.body.preco * 100) % 1 !== 0) {
+                return res.status(400).json({
+                    mensagem: 'O preco deve ter no máximo duas casas decimais',
+                });
+            }
+
             produto.preco = parseFloat(req.body.preco);
         }
         if (req.body.disponivel !== undefined) produto.disponivel = req.body.disponivel;
