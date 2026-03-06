@@ -13,9 +13,9 @@ const EnderecoViaCEP = async (cep) => {
     if (cepLimpo.length !== 8) return null;
 
     try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
         const data = await response.json();
-        if (data.error) return null;
+        if (data.erro) return null;
         return data;
     } catch (error) {
         return null;
@@ -27,9 +27,15 @@ export const criar = async (req, res) => {
         const { nome, telefone, email, cpf, cep } = req.body;
 
         if (!nome || !telefone || !email || !cpf || !cep) {
-            return res.status(400).json({
-                message: 'Todos os campos são obrigatórios',
-            });
+            return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+        }
+
+        if (nome.length < 3 || nome.length > 100) {
+            return res.status(400).json({ message: 'O nome deve ter entre 3 e 100 caracteres' });
+        }
+
+        if (cep.length !== 9) {
+            return res.status(400).json({ message: 'O CEP deve ter exatamente 9 dígitos (ex: 12345-678)' });
         }
 
         const cpfLimpo = limparTexto(cpf);
@@ -37,15 +43,11 @@ export const criar = async (req, res) => {
         const cepLimpo = limparTexto(cep);
 
         if (cpfLimpo.length !== 11) {
-            return res.status(400).json({ message: 'O CPF deve ter 11 dígitos' });
+            return res.status(400).json({ message: 'O CPF deve ter exatamente 11 dígitos' });
         }
 
         if (telLimpo.length < 10 || telLimpo.length > 11) {
             return res.status(400).json({ message: 'O telefone deve ter 10 ou 11 dígitos' });
-        }
-
-        if (cepLimpo.length !== 8) {
-            return res.status(400).json({ message: 'O CEP deve ter 8 dígitos' });
         }
 
         const conflito = await ClienteModel.buscarPorCamposUnicos({
@@ -55,14 +57,13 @@ export const criar = async (req, res) => {
         });
 
         if (conflito) {
-            let campo =
-                conflito.cpf === cpfLimpo ? 'CPF' : conflito.email === email ? 'Email' : 'Telefone';
+            let campo = conflito.cpf === cpfLimpo ? 'CPF' : conflito.email === email ? 'Email' : 'Telefone';
             return res.status(400).json({ message: `Este ${campo} já está cadastrado.` });
         }
 
         const endereco = await EnderecoViaCEP(cepLimpo);
         if (!endereco) {
-            return res.status(400).json({ message: 'CEP inválido ou não encontrado.' });
+            return res.status(400).json({ message: 'CEP inválido ou não encontrado' });
         }
 
         const cliente = new ClienteModel({
@@ -70,7 +71,7 @@ export const criar = async (req, res) => {
             telefone: telLimpo,
             email,
             cpf: cpfLimpo,
-            cep: cepLimpo,
+            cep: cep,
             logradouro: endereco.logradouro || null,
             bairro: endereco.bairro || null,
             localidade: endereco.localidade || null,
@@ -79,10 +80,12 @@ export const criar = async (req, res) => {
         });
 
         await cliente.criar();
-
         return res.status(201).json({ message: 'Cliente criado com sucesso!' });
+
     } catch (error) {
-        console.error('Erro ao criar cliente:', error);
+        if (error.code === 'P2002') {
+            return res.status(400).json({ message: 'CPF ou Email já cadastrado no sistema' });
+        }
         return res.status(500).json({ message: 'Erro interno ao tentar salvar o cliente.' });
     }
 };
@@ -90,19 +93,9 @@ export const criar = async (req, res) => {
 export const buscarTodos = async (req, res) => {
     try {
         const clientes = await ClienteModel.buscarTodos(req.query);
-        res.json(clientes);
+        return res.json(clientes);
     } catch (error) {
-        res.status(500).json({
-            message: 'Erro ao tentar busca clientes.',
-        });
-    }
-
-    const conflito = await ClienteModel.buscarPorCamposUnicos({ email, cpf, telefone });
-
-    if (conflito) {
-        return res.status(400).json({
-            message: 'CPF, Email ou Telefone já cadastrado no sistema.',
-        });
+        return res.status(500).json({ message: 'Erro ao tentar buscar clientes.' });
     }
 };
 
@@ -112,17 +105,12 @@ export const buscarPorId = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({
-                message: `O cliente com o id ${id} não existe.`,
-            });
+            return res.status(404).json({ message: `O cliente com o id ${id} não existe.` });
         }
 
-        res.json(cliente);
+        return res.json(cliente);
     } catch (error) {
-        res.status(500).json({
-            error: 'Erro ao buscar cliente.',
-            message: 'Erro ao buscar o cliente pelo o id informado.',
-        });
+        return res.status(500).json({ message: 'Erro ao buscar o cliente pelo o id informado.' });
     }
 };
 
@@ -132,12 +120,20 @@ export const atualizar = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({
-                message: 'O cliente com id informado não foi encontrado',
-            });
+            return res.status(404).json({ message: 'O cliente com id informado não foi encontrado' });
         }
 
-        const camposPermitidos = ['nome', 'telefone', 'email', 'cpf', 'cep'];
+        if (req.body.cep && req.body.cep !== cliente.cep) {
+            const novoEndereco = await EnderecoViaCEP(req.body.cep);
+            if (novoEndereco) {
+                cliente.logradouro = novoEndereco.logradouro;
+                cliente.bairro = novoEndereco.bairro;
+                cliente.localidade = novoEndereco.localidade;
+                cliente.uf = novoEndereco.uf;
+            }
+        }
+
+        const camposPermitidos = ['nome', 'telefone', 'email', 'cpf', 'cep', 'ativo'];
 
         camposPermitidos.forEach((campo) => {
             if (req.body[campo] !== undefined) {
@@ -150,13 +146,9 @@ export const atualizar = async (req, res) => {
         });
 
         await cliente.atualizar();
-        res.json({
-            message: 'Atualizado com sucesso!',
-        });
+        return res.json({ message: 'Atualizado com sucesso!' });
     } catch (error) {
-        res.status(500).json({
-            message: 'Erro ao tentar atualizar o cliente.',
-        });
+        return res.status(500).json({ message: 'Erro ao tentar atualizar o cliente.' });
     }
 };
 
@@ -166,25 +158,17 @@ export const deletar = async (req, res) => {
 
         const temPedidosAbertos = await ClienteModel.verificarPedidosAbertos(id);
         if (temPedidosAbertos) {
-            return res.status(400).json({
-                message: 'Cliente tem pedidos abertos!',
-            });
+            return res.status(400).json({ message: 'Cliente tem pedidos abertos!' });
         }
 
         const cliente = await ClienteModel.buscarPorId(id);
         if (!cliente) {
-            return res.status(404).json({
-                message: 'Cliente não encontrado.',
-            });
+            return res.status(404).json({ message: 'Cliente não encontrado.' });
         }
 
         await cliente.deletar();
-        res.json({
-            message: 'Removido com sucesso!',
-        });
+        return res.json({ message: 'Removido com sucesso!' });
     } catch (error) {
-        res.status(500).json({
-            message: 'Erro ao deletar.',
-        });
+        return res.status(500).json({ message: 'Erro ao deletar.' });
     }
 };
