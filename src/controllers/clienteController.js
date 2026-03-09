@@ -22,6 +22,69 @@ const EnderecoViaCEP = async (cep) => {
     }
 };
 
+export const getClimaCliente = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const cliente = await ClienteModel.buscarPorId(id);
+
+        if (!cliente) {
+            return res.status(404).json({
+                message: ('Cliente não encontrado')
+            });
+        }
+
+if (!cliente.localidade) {
+    return res.status(400).json({
+        message: ('Cliente sem cidade cadastrada')
+    });
+}
+
+const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cliente.localidade)}&count=1&language=pt&countryCode=BR`;
+const geoRes = await fetch(geoUrl);
+const geoData = await geoRes.json();
+
+if (!geoData.results || geoData.results.length === 0) {
+    return res.status(404).json({
+        message: ( `Não foi possível encontrar a localização para a cidade ${cliente.localidade}` )
+    });
+}
+
+const { latitude, logitude } = geoData.results[0];
+
+const climaUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${logitude}&current_weather=true`;
+const climaRes = await fetch(climaUrl);
+const climaData = await climaRes.json();
+
+
+const isChovendo = code >= 51;
+const isQuente = temp > 25;
+
+let sugestao = "Dia quente! que tal conferir os lançamentos ? ";
+if (isQuente) {
+    sugestao = "Dia quente! Destaque combos com bebida gelada ";
+} else if (isChovendo) {
+    sugestao = "Dia chuvoso! Perfeito para pedir um lanche quentinho em casa ";
+} else if (temp < 18) {
+    sugestao = "Clima fresquinho! Otimo para acompanhar um Petit Gâteau ";
+}
+
+return res.json({
+    cidade: cliente.localidade,
+    temperatura: temp,
+    quente: isQuente,
+    chuva: isChovendo,
+    sugestao
+});
+
+    } catch (error) {
+            return res.status(500).json({
+            message: 'Erro ao buscar o clima para o cliente'
+        });
+    }
+};
+
+console.log("Cidade buscada:", cliente.localidade);
+
 export const criar = async (req, res) => {
     try {
         const { nome, telefone, email, cpf, cep } = req.body;

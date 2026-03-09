@@ -8,5 +8,6 @@ router.get('/clientes/:id', clienteController.buscarPorId);
 router.post('/clientes', clienteController.criar);
 router.put('/clientes/:id', clienteController.atualizar);
 router.delete('/clientes/:id', clienteController.deletar);
+router.get('/clientes/:id/clima', clienteController.getClimaCliente);
 
 export default router;
