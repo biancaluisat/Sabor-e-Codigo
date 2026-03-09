@@ -116,10 +116,17 @@ export default class ClienteModel {
         try {
             const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
             const data = await response.json();
-            if (data.erro) return null;
+            
+            if (data.erro) {
+                throw new Error(`CEP ${cepLimpo} não encontrado.`);
+            }
+            
             return data;
         } catch (error) {
-            return null;
+            if (error.message.includes('não encontrado')) {
+                throw error;
+            }
+            throw new Error('Serviço ViaCEP indisponível no momento.');
         }
     }
 
@@ -132,8 +139,39 @@ export default class ClienteModel {
     static validarCpf(cpf) {
         const cpfLimpo = this.limparTexto(cpf);
         if (cpfLimpo.length !== 11) {
-            throw new Error('O CPF deve ter exatamente 11 dígitos');
+            throw new Error('CPF deve conter exatamente 11 dígitos numéricos.');
         }
+        
+        if (/^(\d)\1{10}$/.test(cpfLimpo)) {
+            throw new Error('CPF informado é inválido.');
+        }
+        
+        let soma = 0;
+        let resto;
+        
+        for (let i = 1; i <= 9; i++) {
+            soma += parseInt(cpfLimpo.substring(i - 1, i)) * (11 - i);
+        }
+        
+        resto = (soma * 10) % 11;
+        if (resto === 10 || resto === 11) resto = 0;
+        
+        if (resto !== parseInt(cpfLimpo.substring(9, 10))) {
+            throw new Error('CPF informado é inválido.');
+        }
+        
+        soma = 0;
+        for (let i = 1; i <= 10; i++) {
+            soma += parseInt(cpfLimpo.substring(i - 1, i)) * (12 - i);
+        }
+        
+        resto = (soma * 10) % 11;
+        if (resto === 10 || resto === 11) resto = 0;
+        
+        if (resto !== parseInt(cpfLimpo.substring(10, 11))) {
+            throw new Error('CPF informado é inválido.');
+        }
+        
         return cpfLimpo;
     }
 
@@ -147,10 +185,22 @@ export default class ClienteModel {
 
     static validarCep(cep) {
         const cepLimpo = this.limparTexto(cep);
-        if (cepLimpo.length !== 9) {
-            throw new Error('O CEP deve ter exatamente 9 dígitos (ex: 12345-678)');
+        if (cepLimpo.length !== 8) {
+            throw new Error('CEP deve conter exatamente 9 dígitos numéricos.');
         }
         return cepLimpo;
+    }
+
+    static validarEmail(email) {
+        if (!email) {
+            throw new Error('O email é obrigatório');
+        }
+        const temArroba = email.includes('@');
+        const temPonto = email.includes('.');
+        
+        if (!temArroba || !temPonto) {
+            throw new Error('O formato do e-mail é inválido.');
+        }
     }
 
     static async validarCamposUnicos({ email, cpf, telefone }) {
@@ -173,35 +223,54 @@ export default class ClienteModel {
         const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
             cliente.localidade,
         )}&count=1&language=pt&countryCode=BR`;
-        const geoRes = await fetch(geoUrl);
-        const geoData = await geoRes.json();
-        if (!geoData.results || geoData.results.length === 0) {
-            throw new Error(
-                `Não foi possível encontrar a localização para a cidade ${cliente.localidade}`,
-            );
+        
+        try {
+            const geoRes = await fetch(geoUrl);
+            const geoData = await geoRes.json();
+            if (!geoData.results || geoData.results.length === 0) {
+                return {
+                    temperatura: null,
+                    chove: null,
+                    quente: null,
+                    sugestao: null,
+                };
+            }
+            
+            const { latitude, longitude } = geoData.results[0];
+            const climaUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&timezone=America/Sao_Paulo`;
+            const climaRes = await fetch(climaUrl);
+            const climaData = await climaRes.json();
+            
+            const temp = climaData.current.temperature_2m;
+            const code = climaData.current.weathercode;
+            
+            const chove = code >= 51 && code <= 67;
+            const quente = temp >= 28;
+            const frio = temp <= 18;
+            
+            let sugestao = 'Clima agradável! Aproveite para divulgar combos da casa.';
+            
+            if (chove) {
+                sugestao = 'Dia chuvoso! Ofereça promoções para delivery.';
+            } else if (quente) {
+                sugestao = 'Dia quente! Destaque combos com bebida gelada.';
+            } else if (frio) {
+                sugestao = 'Dia frio! Destaque cafés e lanches quentes.';
+            }
+            
+            return {
+                temperatura: temp,
+                chove,
+                quente,
+                sugestao,
+            };
+        } catch (error) {
+            return {
+                temperatura: null,
+                chove: null,
+                quente: null,
+                sugestao: null,
+            };
         }
-        const { latitude, longitude } = geoData.results[0];
-        const climaUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
-        const climaRes = await fetch(climaUrl);
-        const climaData = await climaRes.json();
-        const temp = climaData.current_weather.temperature;
-        const code = climaData.current_weather.weathercode;
-        const isChovendo = code >= 51;
-        const isQuente = temp > 25;
-        let sugestao = 'Dia quente! que tal conferir os lançamentos ? ';
-        if (isQuente) {
-            sugestao = 'Dia quente! Destaque combos com bebida gelada ';
-        } else if (isChovendo) {
-            sugestao = 'Dia chuvoso! Perfeito para pedir um lanche quentinho em casa ';
-        } else if (temp < 18) {
-            sugestao = 'Clima fresquinho! Otimo para acompanhar um Petit Gâteau ';
-        }
-        return {
-            cidade: cliente.localidade,
-            temperatura: temp,
-            quente: isQuente,
-            chuva: isChovendo,
-            sugestao,
-        };
     }
 }

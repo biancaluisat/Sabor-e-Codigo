@@ -60,15 +60,50 @@ export default class ItemPedidoModel {
         return item.pedido.status !== 'ABERTO';
     }
 
-    static validarCriar({ pedidoId, produtoId, quantidade, precoUnitario }) {
-        if (!pedidoId || !produtoId || !quantidade || !precoUnitario) {
-            throw new Error('pedidoId, produtoId, quantidade e precoUnitario são obrigatórios!');
+    static async removerItem(itemPedidoId) {
+        const item = await prisma.itemPedido.findUnique({
+            where: { id: itemPedidoId },
+            include: { pedido: true },
+        });
+
+        if (!item) {
+            throw new Error('Item não encontrado.');
         }
-        if (isNaN(quantidade) || quantidade <= 0) {
-            throw new Error('Quantidade deve ser um número maior que 0');
+
+        if (item.pedido.status !== 'ABERTO') {
+            throw new Error('Não pode remover item de pedido PAGO ou CANCELADO.');
         }
-        if (isNaN(precoUnitario) || precoUnitario <= 0) {
-            throw new Error('Preco unitário deve ser um número maior que 0');
-        }
+
+        await prisma.itemPedido.delete({
+            where: { id: itemPedidoId },
+        });
+
+        const itensRestantes = await prisma.itemPedido.findMany({
+            where: { pedidoId: item.pedidoId },
+        });
+
+        const totalCalculado = itensRestantes.reduce((acc, itemAtual) => {
+            return acc + itemAtual.precoUnitario * itemAtual.quantidade;
+        }, 0);
+
+        return prisma.pedido.update({
+            where: { id: item.pedidoId },
+            data: { total: totalCalculado },
+        });
+    }
+
+    static async recalcularTotalPedido(pedidoId) {
+        const itens = await prisma.itemPedido.findMany({
+            where: { pedidoId },
+        });
+
+        const totalCalculado = itens.reduce((acc, item) => {
+            return acc + item.precoUnitario * item.quantidade;
+        }, 0);
+
+        return prisma.pedido.update({
+            where: { id: pedidoId },
+            data: { total: totalCalculado },
+        });
     }
 }

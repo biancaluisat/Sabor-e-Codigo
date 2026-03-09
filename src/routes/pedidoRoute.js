@@ -3,11 +3,14 @@ import * as controller from '../controllers/pedidoController.js';
 
 const router = express.Router();
 
+router.post('/pedidos', controller.criar);
+router.get('/pedidos', controller.buscarTodos);
+router.get('/pedidos/:id', controller.buscarPorId);
 
-router.post('/pedido', controller.criar);
-router.get('/pedido', controller.buscarTodos);
-router.get('/pedido/:id', controller.buscarPorId);
-router.put('/pedido/:id', controller.cancelar);
-router.delete('/pedido/:id', controller.pagar);
+router.put('/pedidos/:id/cancelar', controller.cancelar);
+router.put('/pedidos/:id/pagar', controller.pagar);
+
+router.post('/pedidos/:id/itens', controller.adicionarItem);
+router.delete('/pedidos/:id/itens/:itemId', controller.removerItem);
 
 export default router;

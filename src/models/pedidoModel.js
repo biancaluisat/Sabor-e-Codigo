@@ -17,6 +17,10 @@ export default class PedidoModel {
         if (!clienteExistente) {
             throw new Error('Cliente não encontrado.');
         }
+        
+        if (!clienteExistente.ativo) {
+            throw new Error('Não é possível criar pedido para cliente inativo.');
+        }
 
         return prisma.pedido.create({
             data: {
@@ -29,7 +33,7 @@ export default class PedidoModel {
 
     async adicionarItem({ produtoId, quantidade }) {
         if (this.status !== 'ABERTO') {
-            throw new Error('Não é possível adicionar itens a um pedido que não esteja ABERTO.');
+            throw new Error('Não é possível adicionar itens a um pedido PAGO ou CANCELADO.');
         }
 
         const produto = await prisma.produto.findUnique({
@@ -41,11 +45,11 @@ export default class PedidoModel {
         }
 
         if (!produto.disponivel) {
-            throw new Error('Produto indisponível não pode ser adicionado ao pedido.');
+            throw new Error('Não pode adicionar produto com disponivel = false ao pedido.');
         }
 
-        if (quantidade <= 0) {
-            throw new Error('Quantidade deve ser maior que 0.');
+        if (quantidade <= 0 || quantidade > 99) {
+            throw new Error('Quantidade deve ser maior que 0 e no máximo 99.');
         }
 
         const itemCriado = await prisma.itemPedido.create({
@@ -159,5 +163,37 @@ export default class PedidoModel {
         if (quantidade <= 0) {
             throw new Error('Quantidade deve ser maior que 0.');
         }
+    }
+
+    static async removerItemPedido(itemPedidoId) {
+        const item = await prisma.itemPedido.findUnique({
+            where: { id: itemPedidoId },
+            include: { pedido: true },
+        });
+
+        if (!item) {
+            throw new Error('Item não encontrado.');
+        }
+
+        if (item.pedido.status !== 'ABERTO') {
+            throw new Error('Não pode remover item de pedido PAGO ou CANCELADO.');
+        }
+
+        await prisma.itemPedido.delete({
+            where: { id: itemPedidoId },
+        });
+
+        const itensRestantes = await prisma.itemPedido.findMany({
+            where: { pedidoId: item.pedidoId },
+        });
+
+        const totalCalculado = itensRestantes.reduce((acc, itemAtual) => {
+            return acc + itemAtual.precoUnitario * itemAtual.quantidade;
+        }, 0);
+
+        return prisma.pedido.update({
+            where: { id: item.pedidoId },
+            data: { total: totalCalculado },
+        });
     }
 }
