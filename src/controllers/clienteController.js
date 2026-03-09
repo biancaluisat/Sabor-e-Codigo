@@ -22,10 +22,46 @@ export const criar = async (req, res) => {
             });
         }
 
-        ClienteModel.validarNome(nome);
-        const cpfLimpo = ClienteModel.validarCpf(cpf);
-        const telLimpo = ClienteModel.validarTelefone(telefone);
-        const cepLimpo = ClienteModel.validarCep(cep);
+        if (nome.length < 3 || nome.length > 100) {
+            return res.status(400).json({ message: 'O nome deve ter entre 3 e 100 caracteres' });
+        }
+
+        if (cep.length !== 9) {
+            return res.status(400).json({ message: 'O CEP deve ter exatamente 9 dígitos (ex: 12345-678)' });
+        }
+        
+        const eValidoEmail = req.body.email;
+
+
+        const temArroba = eValidoEmail.includes('@');
+        const temPonto = eValidoEmail.includes('.');
+
+        if (!temArroba || !temPonto) {
+            return res.status(400).json({ message: 'O formato do e-mail é inválido.' });
+        }
+
+        const emailEmUso = await prisma.cliente.findUnique({
+            where: { email: email }
+        });
+
+
+        if (emailEmUso) {
+        return res.status(400).json({ message: 'Este e-mail já está cadastrado.' });
+        }
+
+
+
+        const cpfLimpo = limparTexto(cpf);
+        const telLimpo = limparTexto(telefone);
+        const cepLimpo = limparTexto(cep);
+
+        if (cpfLimpo.length !== 11) {
+            return res.status(400).json({ message: 'O CPF deve ter exatamente 11 dígitos' });
+        }
+
+        if (telLimpo.length < 10 || telLimpo.length > 11) {
+            return res.status(400).json({ message: 'O telefone deve ter 10 ou 11 dígitos' });
+        }
 
         await ClienteModel.validarCamposUnicos({
             email,
