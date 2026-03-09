@@ -82,9 +82,6 @@ return res.json({
         });
     }
 };
-
-
-
 export const criar = async (req, res) => {
     try {
         const { nome, telefone, email, cpf, cep } = req.body;
