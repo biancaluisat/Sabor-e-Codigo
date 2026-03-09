@@ -83,7 +83,7 @@ return res.json({
     }
 };
 
-console.log("Cidade buscada:", cliente.localidade);
+
 
 export const criar = async (req, res) => {
     try {
