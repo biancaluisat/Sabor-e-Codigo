@@ -1,4 +1,5 @@
-import ClienteModel from '../models/ClienteModel.js';
+import ClienteModel from '../models/clienteModel.js';
+import prisma from '../utils/prismaClient.js';
 
 export const getClimaCliente = async (req, res) => {
     try {
