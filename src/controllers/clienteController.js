@@ -99,6 +99,27 @@ export const criar = async (req, res) => {
         if (cep.length !== 9) {
             return res.status(400).json({ message: 'O CEP deve ter exatamente 9 dígitos (ex: 12345-678)' });
         }
+        
+        const eValidoEmail = req.body.email;
+
+
+        const temArroba = eValidoEmail.includes('@');
+        const temPonto = eValidoEmail.includes('.');
+
+        if (!temArroba || !temPonto) {
+            return res.status(400).json({ message: 'O formato do e-mail é inválido.' });
+        }
+
+        const emailEmUso = await prisma.cliente.findUnique({
+            where: { email: email }
+        });
+
+
+        if (emailEmUso) {
+        return res.status(400).json({ message: 'Este e-mail já está cadastrado.' });
+        }
+
+
 
         const cpfLimpo = limparTexto(cpf);
         const telLimpo = limparTexto(telefone);
