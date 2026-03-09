@@ -69,6 +69,7 @@ export default class ClienteModel {
         const where = {};
 
         if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
+        if (filtros.cpf) where.cpf = filtros.cpf;
         if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
 
         return prisma.cliente.findMany({ where });
@@ -83,28 +84,12 @@ export default class ClienteModel {
     static async verificarPedidosAbertos(clienteId) {
         const pedidosAbertos = await prisma.pedido.count({
             where: {
-
                 clienteId: clienteId,
-                status: "ABERTO"
-            }
-
+                status: 'ABERTO',
+            },
         });
         return pedidosAbertos > 0;
     }
-
-    static async buscarTodos(filtros = {}) {
-        const where = {};
-
-        if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'intensitive' };
-
-        if (filtros.cpf) where.cpf = filtros.cpf;
-
-        if (filtros.ativo !== undefined) where.ativo = filtros.ativo === 'true';
-
-        return prisma.cliente.findMany({ where });
-    }
-
-
 
     static async buscarPorCamposUnicos({ email, cpf, telefone }) {
         try {
@@ -118,4 +103,4 @@ export default class ClienteModel {
             throw new Error('Erro ao buscar campos únicos: ' + error.message);
         }
     }
-};
+}
