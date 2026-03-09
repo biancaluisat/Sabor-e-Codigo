@@ -15,10 +15,10 @@ export default class ItemPedidoModel {
                 pedido: { connect: { id: this.pedidoId } },
                 produto: { connect: { id: this.produtoId } },
                 quantidade: this.quantidade,
-                precoUnitario: this.precoUnitario
-            }
+                precoUnitario: this.precoUnitario,
+            },
         });
-    };
+    }
 
     async atualizar() {
         return prisma.itemPedido.update({
@@ -27,28 +27,37 @@ export default class ItemPedidoModel {
                 pedido: { connect: { id: this.pedidoId } },
                 produto: { connect: { id: this.produtoId } },
                 quantidade: this.quantidade,
-                precoUnitario: this.precoUnitario
-            }
+                precoUnitario: this.precoUnitario,
+            },
         });
-    };
+    }
 
     async deletar() {
         return prisma.itemPedido.delete({
-            where: { id: this.id }
+            where: { id: this.id },
         });
-    };
+    }
 
     static async buscarTodos() {
         const data = await prisma.itemPedido.findMany();
-        return data.map(item => new ItemPedidoModel(item));
-    };
+        return data.map((item) => new ItemPedidoModel(item));
+    }
 
     static async buscarPorId(id) {
         const data = await prisma.itemPedido.findUnique({
-            where: { id: Number(id) }
+            where: { id: Number(id) },
         });
 
         if (!data) return null;
         return new ItemPedidoModel(data);
+    }
+    static async verificarItemAberto(itemPedido) {
+        const pedidosAbertos = await prisma.itemPedido.count({
+            where: {
+                itemPedido: itemPedido,
+                status: ['PAGO', 'CANCELADO'],
+            },
+        });
+        return pedidosAbertos > 0;
     }
 }

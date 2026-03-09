@@ -4,12 +4,12 @@ import autenticarApiKey from '../utils/apiKey.js';
 
 const router = Router();
 
-router.get('/clientes', clienteController.buscarTodos);
-router.get('/clientes/:id', clienteController.buscarPorId);
-router.post('/clientes', clienteController.criar);
-router.put('/clientes/:id', clienteController.atualizar);
-router.delete('/clientes/:id', clienteController.deletar);
-router.get('/clientes/:id/clima', clienteController.getClimaCliente);
+router.get('/clientes',autenticarApiKey, clienteController.buscarTodos);
+router.get('/clientes/:id',autenticarApiKey, clienteController.buscarPorId);
+router.post('/clientes',autenticarApiKey, clienteController.criar);
+router.put('/clientes/:id',autenticarApiKey, clienteController.atualizar);
+router.delete('/clientes/:id',autenticarApiKey, clienteController.deletar);
+router.get('/clientes/:id/clima',autenticarApiKey, clienteController.getClimaCliente);
 
 
 export default router;
