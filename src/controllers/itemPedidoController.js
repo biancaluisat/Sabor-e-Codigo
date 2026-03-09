@@ -4,11 +4,7 @@ export const criar = async (req, res) => {
     try {
         const { pedidoId, produtoId, quantidade, precoUnitario } = req.body;
 
-        if (!pedidoId || !produtoId || !quantidade || !precoUnitario) {
-            return res.status(400).json({
-                error: 'pedidoId, produtoId, quantidade e precoUnitario são obrigatórios!',
-            });
-        }
+        ItemPedidoModel.validarCriar({ pedidoId, produtoId, quantidade, precoUnitario });
 
         const itemPedido = new ItemPedidoModel({
             pedidoId,
@@ -64,7 +60,7 @@ export const atualizar = async (req, res) => {
         const item = await ItemPedidoModel.buscarPorId(id);
 
         if (!item) {
-            return res.status(404).json({ error: 'Cliente não encontrado.' });
+            return res.status(404).json({ error: 'Item não encontrado.' });
         }
 
         if (req.body.pedidoId) item.pedidoId = req.body.pedidoId;
@@ -83,9 +79,9 @@ export const deletar = async (req, res) => {
     try {
         const id = parseInt(req.params.id);
 
-        if (!id) {
-            return res.status(500).json({
-                message: `O id:${id} fornecido não consta no banco de dados`,
+        if (isNaN(id)) {
+            return res.status(400).json({
+                message: 'O id fornecido é inválido',
             });
         }
 
