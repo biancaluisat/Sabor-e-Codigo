@@ -88,7 +88,9 @@ export const criar = async (req, res) => {
         const { nome, telefone, email, cpf, cep } = req.body;
 
         if (!nome || !telefone || !email || !cpf || !cep) {
-            return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+            return res.status(400).json({
+                message: 'Todos os campos são obrigatórios'
+            });
         }
 
         if (nome.length < 3 || nome.length > 100) {
@@ -141,13 +143,26 @@ export const criar = async (req, res) => {
         });
 
         await cliente.criar();
-        return res.status(201).json({ message: 'Cliente criado com sucesso!' });
+
+        return res.status(201).json({
+
+            message: 'Cliente criado com sucesso!',
+            cliente
+        });
 
     } catch (error) {
-        if (error.code === 'P2002') {
-            return res.status(400).json({ message: 'CPF ou Email já cadastrado no sistema' });
+        if (error.code) {
+            return res.status(400).json({
+                error: error.message,
+                message:
+                    'CPF ou Email já cadastrado no sistema',
+            });
         }
-        return res.status(500).json({ message: 'Erro interno ao tentar salvar o cliente.' });
+
+        return res.status(500).json({
+
+            message: 'Erro interno ao tentar salvar o cliente.',
+        });
     }
 };
 
@@ -156,7 +171,12 @@ export const buscarTodos = async (req, res) => {
         const clientes = await ClienteModel.buscarTodos(req.query);
         return res.json(clientes);
     } catch (error) {
-        return res.status(500).json({ message: 'Erro ao tentar buscar clientes.' });
+
+        return res.status(500).json({
+            error: error.message,
+            message:
+                'Erro ao tentar buscar clientes.'
+        });
     }
 };
 
@@ -171,7 +191,10 @@ export const buscarPorId = async (req, res) => {
 
         return res.json(cliente);
     } catch (error) {
-        return res.status(500).json({ message: 'Erro ao buscar o cliente pelo o id informado.' });
+        return res.status(500).json({
+            error: error.message,
+            message: 'Erro ao buscar o cliente pelo o id informado.'
+        });
     }
 };
 
@@ -181,7 +204,10 @@ export const atualizar = async (req, res) => {
         const cliente = await ClienteModel.buscarPorId(id);
 
         if (!cliente) {
-            return res.status(404).json({ message: 'O cliente com id informado não foi encontrado' });
+            return res.status(404).json({
+                error: error.message,
+                message: 'O cliente com id informado não foi encontrado'
+            });
         }
 
         if (req.body.cep && req.body.cep !== cliente.cep) {
@@ -209,7 +235,10 @@ export const atualizar = async (req, res) => {
         await cliente.atualizar();
         return res.json({ message: 'Atualizado com sucesso!' });
     } catch (error) {
-        return res.status(500).json({ message: 'Erro ao tentar atualizar o cliente.' });
+        return res.status(500).json({
+            error: error.message,
+            message: 'Erro ao tentar atualizar o cliente.'
+        });
     }
 };
 
@@ -230,6 +259,9 @@ export const deletar = async (req, res) => {
         await cliente.deletar();
         return res.json({ message: 'Removido com sucesso!' });
     } catch (error) {
-        return res.status(500).json({ message: 'Erro ao deletar.' });
+        return res.status(500).json({
+            error: error.message,
+            message: 'Erro ao deletar.'
+        });
     }
 };
