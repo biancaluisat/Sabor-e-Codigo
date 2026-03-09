@@ -51,13 +51,24 @@ export default class ItemPedidoModel {
         if (!data) return null;
         return new ItemPedidoModel(data);
     }
-    static async verificarItemAberto(itemPedido) {
-        const pedidosAbertos = await prisma.itemPedido.count({
-            where: {
-                itemPedido: itemPedido,
-                status: ['PAGO', 'CANCELADO'],
-            },
+    static async verificarItemAberto(itemPedidoId) {
+        const item = await prisma.itemPedido.findUnique({
+            where: { id: itemPedidoId },
+            include: { pedido: true },
         });
-        return pedidosAbertos > 0;
+        if (!item) return false;
+        return item.pedido.status !== 'ABERTO';
+    }
+
+    static validarCriar({ pedidoId, produtoId, quantidade, precoUnitario }) {
+        if (!pedidoId || !produtoId || !quantidade || !precoUnitario) {
+            throw new Error('pedidoId, produtoId, quantidade e precoUnitario são obrigatórios!');
+        }
+        if (isNaN(quantidade) || quantidade <= 0) {
+            throw new Error('Quantidade deve ser um número maior que 0');
+        }
+        if (isNaN(precoUnitario) || precoUnitario <= 0) {
+            throw new Error('Preco unitário deve ser um número maior que 0');
+        }
     }
 }

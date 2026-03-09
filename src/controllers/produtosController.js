@@ -9,46 +9,23 @@ export const criar = async (req, res) => {
         const { nome, descricao, categoria, preco, disponivel } = req.body;
 
         if (!nome) return res.status(400).json({ error: 'O campo "nome" é obrigatório!' });
+        if (!categoria)
+            return res.status(400).json({ error: 'O campo "categoria" é obrigatório!' });
+        if (preco === undefined || preco === null)
+            return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
 
-        if (nome.length < 3) {
-            return res.status(400).json({
-                mensagem: 'O nome precisa de no mínimo 3 caracteres'
-            });
-        }
+        ProdutosModel.validarNome(nome);
+        ProdutosModel.validarDescricao(descricao);
+        const categoriaUpper = ProdutosModel.validarCategoria(categoria);
+        const precoValidado = ProdutosModel.validarPreco(preco);
 
-        if (descricao && descricao.length > 255) {
-            return res.status(400).json({
-                mensagem: 'A descrição não pode ter mais que 255 caracteres'
-            });
-        }
-
-        if (!categoria) return res.status(400).json({ error: 'O campo "categoria" é obrigatório!' });
-
-        const categoriaUpper = categoria.toUpperCase();
-
-        const categoriasValidas = ["LANCHE", "BEBIDA", "SOBREMESA", "COMBO"];
-        if (!categoriasValidas.includes(categoriaUpper)) {
-            return res.status(400).json({
-                total: 0,
-                mensagem: `Categoria inválida. Categorias aceitas: ${categoriasValidas.join(", ")}`
-            });
-        }
-
-        if (preco === undefined || preco === null) return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
-        if (preco <= 0) {
-            return res.status(400).json({
-                mensagem: 'o preco deve ser maior que 0'
-            });
-        }
-
-        if (preco * 100 % 1 !== 0) {
-            return res.status(400).json({
-                mensagem: 'O preco deve ter no máximo duas casas decimais'
-            });
-        }
-
-        const novoProduto = new ProdutosModel({ nome, descricao, categoria: categoriaUpper, preco: parseFloat(preco), disponivel });
-
+        const novoProduto = new ProdutosModel({
+            nome,
+            descricao,
+            categoria: categoriaUpper,
+            preco: precoValidado,
+            disponivel,
+        });
 
         const data = await novoProduto.criar();
 
@@ -112,50 +89,20 @@ export const atualizar = async (req, res) => {
         }
 
         if (req.body.nome !== undefined) {
-            if (req.body.nome.length < 3) {
-                return res.status(400).json({
-                    mensagem: 'O nome precisa de no mínimo 3 caracteres',
-                });
-            }
-
+            ProdutosModel.validarNome(req.body.nome);
             produto.nome = req.body.nome;
         }
         if (req.body.descricao !== undefined) {
-            if (req.body.descricao.length > 255) {
-                return res.status(400).json({
-                    mensagem: 'A descrição não pode ter mais que 255 caracteres',
-                });
-            }
-
+            ProdutosModel.validarDescricao(req.body.descricao);
             produto.descricao = req.body.descricao;
         }
 
         if (req.body.categoria !== undefined) {
-            const categoriaUpper = req.body.categoria.toUpperCase();
-
-            const categoriasValidas = ["LANCHE", "BEBIDA", "SOBREMESA", "COMBO"];
-            if (!categoriasValidas.includes(categoriaUpper)) {
-                return res.status(400).json({
-                    total: 0,
-                    mensagem: `Categoria inválida. Categorias aceitas: ${categoriasValidas.join(", ")}`
-                });
-            }
-            produto.categoria = categoriaUpper;
+            produto.categoria = ProdutosModel.validarCategoria(req.body.categoria);
         }
 
         if (req.body.preco !== undefined) {
-            if (parseFloat(req.body.preco) <= 0) {
-                return res.status(400).json({
-                    mensagem: 'Preco deve ser maior que 0'
-                });
-            }
-            if ((req.body.preco * 100) % 1 !== 0) {
-                return res.status(400).json({
-                    mensagem: 'O preco deve ter no máximo duas casas decimais',
-                });
-            }
-
-            produto.preco = parseFloat(req.body.preco);
+            produto.preco = ProdutosModel.validarPreco(req.body.preco);
         }
         if (req.body.disponivel !== undefined) produto.disponivel = req.body.disponivel;
 
@@ -184,13 +131,17 @@ export const deletar = async (req, res) => {
         const vinculado = await ProdutosModel.pedidoAberto(produtoId);
         if (vinculado) {
             return res.status(400).json({
-                mensagem: "Este produto não pode ser excluído, pois está vinculado a pedidos abertos"
+                mensagem:
+                    'Este produto não pode ser excluído, pois está vinculado a pedidos abertos',
             });
         }
 
         await produto.deletar();
 
-        res.json({ message: `O registro "${produto.nome}" foi deletado com sucesso!`, deletado: produto });
+        res.json({
+            message: `O registro "${produto.nome}" foi deletado com sucesso!`,
+            deletado: produto,
+        });
     } catch (error) {
         console.error('Erro ao deletar:', error);
         res.status(500).json({ error: 'Erro ao deletar registro.' });

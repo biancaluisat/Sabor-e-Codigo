@@ -31,7 +31,8 @@ export default class ProdutosModel {
                 categoria: this.categoria,
                 preco: this.preco,
                 disponivel: this.disponivel,
-        }});
+            },
+        });
     }
 
     async deletar() {
@@ -42,8 +43,12 @@ export default class ProdutosModel {
         const where = {};
 
         if (filtros.nome) where.nome = { contains: filtros.nome, mode: 'insensitive' };
-        if (filtros.categoria) { where.categoria = { in: filtros.categoria.split(',').map(c => c.toUpperCase()) }; }
-        if (filtros.disponivel !== undefined) { where.disponivel = filtros.disponivel === 'true' };
+        if (filtros.categoria) {
+            where.categoria = { in: filtros.categoria.split(',').map((c) => c.toUpperCase()) };
+        }
+        if (filtros.disponivel !== undefined) {
+            where.disponivel = filtros.disponivel === 'true';
+        }
         if (filtros.precoMin || filtros.precoMax) {
             where.preco = {};
 
@@ -54,7 +59,7 @@ export default class ProdutosModel {
             if (filtros.precoMax) {
                 where.preco.lte = Number(filtros.precoMax);
             }
-    }
+        }
 
         return prisma.produto.findMany({ where });
     }
@@ -70,10 +75,46 @@ export default class ProdutosModel {
             where: {
                 produtoId: produtoId,
                 pedido: {
-                    status: "ABERTO"
-                }
-            }
+                    status: 'ABERTO',
+                },
+            },
         });
         return contagem > 0;
+    }
+
+    static validarNome(nome) {
+        if (!nome || nome.length < 3) {
+            throw new Error('O nome precisa de no mínimo 3 caracteres');
+        }
+    }
+
+    static validarDescricao(descricao) {
+        if (descricao && descricao.length > 255) {
+            throw new Error('A descrição não pode ter mais que 255 caracteres');
+        }
+    }
+
+    static validarCategoria(categoria) {
+        const categoriaUpper = categoria.toUpperCase();
+        const categoriasValidas = ['LANCHE', 'BEBIDA', 'SOBREMESA', 'COMBO'];
+        if (!categoriasValidas.includes(categoriaUpper)) {
+            throw new Error(
+                `Categoria inválida. Categorias aceitas: ${categoriasValidas.join(', ')}`,
+            );
+        }
+        return categoriaUpper;
+    }
+
+    static validarPreco(preco) {
+        if (preco === undefined || preco === null) {
+            throw new Error('O campo "preco" é obrigatório!');
+        }
+        if (preco <= 0) {
+            throw new Error('o preco deve ser maior que 0');
+        }
+        if ((preco * 100) % 1 !== 0) {
+            throw new Error('O preco deve ter no máximo duas casas decimais');
+        }
+        return parseFloat(preco);
     }
 }
