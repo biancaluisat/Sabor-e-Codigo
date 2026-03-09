@@ -1,6 +1,10 @@
 import express from 'express';
 import * as controller from '../controllers/itemPedidoController.js';
+<<<<<<< yasmin
 import autenticarApiKey from "../utils/apiKey.js";
+=======
+import autenticarApiKey from '../utils/apiKey.js';
+>>>>>>> main
 
 const router = express.Router();
 
