@@ -1,4 +1,4 @@
-import ItemPedidoModel from "../models/ItemPedidoModel.js";
+import ItemPedidoModel from '../models/ItemPedidoModel.js';
 
 export const criar = async (req, res) => {
     try {
@@ -6,7 +6,7 @@ export const criar = async (req, res) => {
 
         if (!pedidoId || !produtoId || !quantidade || !precoUnitario) {
             return res.status(400).json({
-                error: "pedidoId, produtoId, quantidade e precoUnitario são obrigatórios!"
+                error: 'pedidoId, produtoId, quantidade e precoUnitario são obrigatórios!',
             });
         }
 
@@ -14,20 +14,19 @@ export const criar = async (req, res) => {
             pedidoId,
             produtoId,
             quantidade,
-            precoUnitario
+            precoUnitario,
         });
 
         const data = await itemPedido.criar();
 
         res.status(201).json({
-            message: "Item do pedido criado com sucesso!",
-            data
+            message: 'Item do pedido criado com sucesso!',
+            data,
         });
-
     } catch (error) {
         res.status(500).json({
-            error: "Erro ao salvar item do pedido.",
-            details: error.message
+            error: 'Erro ao salvar item do pedido.',
+            details: error.message,
         });
     }
 };
@@ -82,14 +81,19 @@ export const atualizar = async (req, res) => {
 
 export const deletar = async (req, res) => {
     try {
-
-
         const id = parseInt(req.params.id);
 
-        if(!id){
+        if (!id) {
             return res.status(500).json({
-                message: `O id:${id} fornecido não consta no banco de dados`
-            })
+                message: `O id:${id} fornecido não consta no banco de dados`,
+            });
+        }
+
+        const verificarStatusPedido = await ItemPedidoModel.verificarItemAberto(id);
+        if (verificarStatusPedido) {
+            return res.status(400).json({
+                message: 'O status atual do pedido não permite que ele seja deletado',
+            });
         }
 
         const item = new ItemPedidoModel({ id });

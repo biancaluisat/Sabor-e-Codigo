@@ -4,6 +4,7 @@ import produtosRoute from './routes/produtosRoute.js';
 import itemPedidoRoute from './routes/itemPedidoRoutes.js'
 import clienteRoute from './routes/clienteRoute.js';
 
+
 const app = express();
 app.use(express.json());
 
@@ -14,7 +15,7 @@ app.get('/', (req, res) => {
 });
 
 // Rotas
-app.use('/api', produtosRoute, itemPedidoRoute, clienteRoute, );
+app.use('/api',  produtosRoute, itemPedidoRoute, clienteRoute, );
 
 
 app.use((req, res) => {
