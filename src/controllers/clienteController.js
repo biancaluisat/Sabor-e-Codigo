@@ -1,4 +1,5 @@
-import ClienteModel from '../models/ClienteModel.js';
+import ClienteModel from '../models/clienteModel.js';
+import prisma from '../utils/prismaClient.js';
 
 export const getClimaCliente = async (req, res) => {
     try {
@@ -51,9 +52,9 @@ export const criar = async (req, res) => {
 
 
 
-        const cpfLimpo = limparTexto(cpf);
-        const telLimpo = limparTexto(telefone);
-        const cepLimpo = limparTexto(cep);
+        const cpfLimpo = ClienteModel.limparTexto(cpf);
+        const telLimpo = ClienteModel.limparTexto(telefone);
+        const cepLimpo = ClienteModel.limparTexto(cep);
 
         if (cpfLimpo.length !== 11) {
             return res.status(400).json({ message: 'O CPF deve ter exatamente 11 dígitos' });
