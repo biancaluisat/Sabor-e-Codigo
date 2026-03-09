@@ -56,6 +56,32 @@ async function main() {
             uf: null,
         },
     });
+    const c4 = await prisma.cliente.create({
+        data: {
+            nome: 'Ana Costa',
+            telefone: '41966665555',
+            email: 'ana.costa@email.com',
+            cpf: '32165498722',
+            cep: '13040100',
+            logradouro: null,
+            bairro: null,
+            localidade: null,
+            uf: null,
+        },
+    });
+    const c5 = await prisma.cliente.create({
+        data: {
+            nome: 'Pedro Lima',
+            telefone: '51955554444',
+            email: 'pedro.lima@provedor.com',
+            cpf: '78912345633',
+            cep: '13045300',
+            logradouro: null,
+            bairro: null,
+            localidade: null,
+            uf: null,
+        },
+    });
 
     console.log('🍔 Inserindo Produtos...');
     const p1 = await prisma.produto.create({
@@ -80,6 +106,30 @@ async function main() {
             categoria: 'SOBREMESA',
             preco: 22.0,
             descricao: 'Com sorvete',
+        },
+    });
+    const p4 = await prisma.produto.create({
+        data: {
+            nome: 'Batata Frita Grande',
+            categoria: 'COMBO',
+            preco: 15.0,
+            descricao: 'Porção grande com bacon',
+        },
+    });
+    const p5 = await prisma.produto.create({
+        data: {
+            nome: 'Suco de Laranja 500ml',
+            categoria: 'BEBIDA',
+            preco: 8.5,
+            descricao: 'Natural e refrescante',
+        },
+    });
+    const p6 = await prisma.produto.create({
+        data: {
+            nome: 'Salada Caesar',
+            categoria: 'LANCHE',
+            preco: 18.0,
+            descricao: 'Com frango grelhado',
         },
     });
 
@@ -117,6 +167,51 @@ async function main() {
             total: 71.0,
             itens: {
                 create: [{ produtoId: p1.id, quantidade: 2, precoUnitario: 35.5 }],
+            },
+        },
+    });
+
+    await prisma.pedido.create({
+        data: {
+            clienteId: c4.id,
+            status: 'ABERTO',
+            total: 76.5,
+            itens: {
+                create: [
+                    { produtoId: p1.id, quantidade: 1, precoUnitario: 35.5 },
+                    { produtoId: p4.id, quantidade: 1, precoUnitario: 15.0 },
+                    { produtoId: p5.id, quantidade: 1, precoUnitario: 8.5 },
+                    { produtoId: p3.id, quantidade: 1, precoUnitario: 22.0 },
+                ],
+            },
+        },
+    });
+
+    await prisma.pedido.create({
+        data: {
+            clienteId: c5.id,
+            status: 'PAGO',
+            total: 43.5,
+            itens: {
+                create: [
+                    { produtoId: p6.id, quantidade: 1, precoUnitario: 18.0 },
+                    { produtoId: p5.id, quantidade: 1, precoUnitario: 8.5 },
+                    { produtoId: p2.id, quantidade: 1, precoUnitario: 7.0 },
+                ],
+            },
+        },
+    });
+
+    await prisma.pedido.create({
+        data: {
+            clienteId: c1.id,
+            status: 'ABERTO',
+            total: 53.0,
+            itens: {
+                create: [
+                    { produtoId: p4.id, quantidade: 2, precoUnitario: 15.0 },
+                    { produtoId: p2.id, quantidade: 2, precoUnitario: 7.0 },
+                ],
             },
         },
     });

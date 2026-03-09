@@ -1,5 +1,5 @@
 import PedidoModel from '../models/pedidoModel.js';
-import ProdutosModel from '../models/ProdutosModel.js';
+
 
 export const criar = async (req, res) => {
     try {
@@ -21,12 +21,7 @@ export const criar = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao criar pedido:', error);
-
-        if (error.message) {
-            return res.status(400).json({ erro: error.message });
-        }
-
-        return res.status(500).json({ erro: 'Erro interno ao criar pedido.' });
+        return res.status(400).json({ erro: error.message });
     }
 };
 
@@ -94,12 +89,7 @@ export const adicionarItem = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao adicionar item:', error);
-
-        if (error.message) {
-            return res.status(400).json({ erro: error.message });
-        }
-
-        return res.status(500).json({ erro: 'Erro interno ao adicionar item ao pedido.' });
+        return res.status(400).json({ erro: error.message });
     }
 };
 
@@ -125,12 +115,7 @@ export const cancelar = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao cancelar pedido:', error);
-
-        if (error.message) {
-            return res.status(400).json({ erro: error.message });
-        }
-
-        return res.status(500).json({ erro: 'Erro interno ao cancelar pedido.' });
+        return res.status(400).json({ erro: error.message });
     }
 };
 
@@ -156,11 +141,32 @@ export const pagar = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao pagar pedido:', error);
+        return res.status(400).json({ erro: error.message });
+    }
+};
 
-        if (error.message) {
-            return res.status(400).json({ erro: error.message });
+export const removerItem = async (req, res) => {
+    try {
+        const { id, itemId } = req.params;
+
+        if (isNaN(id) || isNaN(itemId)) {
+            return res.status(400).json({ erro: 'ID inválido. Informe números válidos.' });
         }
 
-        return res.status(500).json({ erro: 'Erro interno ao processar pagamento.' });
+        const pedido = await PedidoModel.buscarPorId(parseInt(id));
+
+        if (!pedido) {
+            return res.status(404).json({ erro: 'Pedido não encontrado.' });
+        }
+
+        const data = await PedidoModel.removerItemPedido(parseInt(itemId));
+
+        return res.status(200).json({
+            mensagem: 'Item removido do pedido com sucesso.',
+            data,
+        });
+    } catch (error) {
+        console.error('Erro ao remover item:', error);
+        return res.status(400).json({ erro: error.message });
     }
 };

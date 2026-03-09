@@ -8,12 +8,6 @@ export const criar = async (req, res) => {
 
         const { nome, descricao, categoria, preco, disponivel } = req.body;
 
-        if (!nome) return res.status(400).json({ error: 'O campo "nome" é obrigatório!' });
-        if (!categoria)
-            return res.status(400).json({ error: 'O campo "categoria" é obrigatório!' });
-        if (preco === undefined || preco === null)
-            return res.status(400).json({ error: 'O campo "preco" é obrigatório!' });
-
         ProdutosModel.validarNome(nome);
         ProdutosModel.validarDescricao(descricao);
         const categoriaUpper = ProdutosModel.validarCategoria(categoria);
@@ -32,7 +26,7 @@ export const criar = async (req, res) => {
         res.status(201).json({ message: 'Registro criado com sucesso!', data });
     } catch (error) {
         console.error('Erro ao criar:', error);
-        res.status(500).json({ error: 'Erro interno ao salvar o registro.' });
+        res.status(400).json({ error: error.message });
     }
 };
 
@@ -41,13 +35,13 @@ export const buscarTodos = async (req, res) => {
         const registros = await ProdutosModel.buscarTodos(req.query);
 
         if (!registros || registros.length === 0) {
-            return res.status(200).json({ message: 'Nenhum registro encontrado.' });
+            return res.status(200).json({ mensagem: 'Nenhum produto encontrado.' });
         }
 
         res.json(registros);
     } catch (error) {
         console.error('Erro ao buscar:', error);
-        res.status(500).json({ error: 'Erro ao buscar registros.' });
+        res.status(400).json({ erro: error.message });
     }
 };
 
@@ -96,11 +90,9 @@ export const atualizar = async (req, res) => {
             ProdutosModel.validarDescricao(req.body.descricao);
             produto.descricao = req.body.descricao;
         }
-
         if (req.body.categoria !== undefined) {
             produto.categoria = ProdutosModel.validarCategoria(req.body.categoria);
         }
-
         if (req.body.preco !== undefined) {
             produto.preco = ProdutosModel.validarPreco(req.body.preco);
         }
@@ -111,7 +103,7 @@ export const atualizar = async (req, res) => {
         res.json({ message: `O registro "${data.nome}" foi atualizado com sucesso!`, data });
     } catch (error) {
         console.error('Erro ao atualizar:', error);
-        res.status(500).json({ error: 'Erro ao atualizar registro.' });
+        res.status(400).json({ error: error.message });
     }
 };
 
@@ -122,7 +114,7 @@ export const deletar = async (req, res) => {
 
         if (isNaN(id)) return res.status(400).json({ error: 'ID inválido.' });
 
-        const produto = await ProdutosModel.buscarPorId(parseInt(id));
+        const produto = await ProdutosModel.buscarPorId(produtoId);
 
         if (!produto) {
             return res.status(404).json({ error: 'Registro não encontrado para deletar.' });
